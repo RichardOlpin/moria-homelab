@@ -1,0 +1,6 @@
+# Never commit live environment secrets or local certificates
+.env
+*.env.local
+*.pem
+*.key
+.DS_Store

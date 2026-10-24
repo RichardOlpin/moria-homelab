@@ -1,0 +1,114 @@
+name: gandalf-edge
+
+services:
+  # ============================================================================
+  # Caddy: Reverse Proxy & Automatic HTTPS ("You shall not pass!")
+  # ============================================================================
+  caddy:
+    image: caddy:2-alpine
+    container_name: caddy
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+      - "443:443/udp" # HTTP/3 QUIC
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - /opt/gandalf/caddy/data:/data
+      - /opt/gandalf/caddy/config:/config
+    environment:
+      - PUBLIC_DOMAIN=${PUBLIC_DOMAIN:-example.com}
+      - LOCAL_DOMAIN=${LOCAL_DOMAIN:-moria.lan}
+      - EREBOR_IP=${EREBOR_IP:-192.168.1.20}
+    networks:
+      - mellon-net
+
+  # ============================================================================
+  # AdGuard Home: Split-Horizon DNS (*.moria.lan) & Network Ad-Blocker
+  # ============================================================================
+  adguard:
+    image: adguard/adguardhome:latest
+    container_name: adguard
+    restart: unless-stopped
+    ports:
+      - "53:53/tcp"
+      - "53:53/udp"
+      - "3000:3000/tcp" # Initial setup port, then proxied via dns.moria.lan
+    volumes:
+      - /opt/gandalf/adguard/work:/opt/adguardhome/work
+      - /opt/gandalf/adguard/conf:/opt/adguardhome/conf
+    networks:
+      - mellon-net
+
+  # ============================================================================
+  # PocketID: Passkey / WebAuthn OIDC SSO ("Speak, friend, and enter")
+  # ============================================================================
+  pocketid:
+    image: ghcr.io/pocket-id/pocket-id:latest
+    container_name: pocketid
+    restart: unless-stopped
+    environment:
+      - PUBLIC_APP_URL=https://auth.${PUBLIC_DOMAIN:-moria.lan}
+      - TRUST_PROXY=true
+    volumes:
+      - /opt/gandalf/pocketid:/app/backend/data
+    networks:
+      - mellon-net
+
+  # ============================================================================
+  # Vaultwarden: Self-Hosted Bitwarden Password Manager
+  # ============================================================================
+  vaultwarden:
+    image: vaultwarden/server:latest
+    container_name: vaultwarden
+    restart: unless-stopped
+    environment:
+      - DOMAIN=https://vault.${LOCAL_DOMAIN:-moria.lan}
+      - SIGNUPS_ALLOWED=${VAULTWARDEN_SIGNUPS:-true}
+      - WEBSOCKET_ENABLED=true
+    volumes:
+      - /opt/gandalf/vaultwarden:/data
+    networks:
+      - mellon-net
+
+  # ============================================================================
+  # Forgejo: Self-Hosted Lightweight Git Server (GitOps & AI Code Repos)
+  # ============================================================================
+  forgejo:
+    image: codeberg.org/forgejo/forgejo:9
+    container_name: forgejo
+    restart: unless-stopped
+    environment:
+      - USER_UID=1000
+      - USER_GID=1000
+      - FORGEJO__server__DOMAIN=git.${LOCAL_DOMAIN:-moria.lan}
+      - FORGEJO__server__ROOT_URL=https://git.${LOCAL_DOMAIN:-moria.lan}/
+      - FORGEJO__server__SSH_DOMAIN=git.${LOCAL_DOMAIN:-moria.lan}
+    volumes:
+      - /opt/gandalf/forgejo:/data
+      - /etc/timezone:/etc/timezone:ro
+      - /etc/localtime:/etc/localtime:ro
+    ports:
+      - "2222:22"
+    networks:
+      - mellon-net
+
+  # ============================================================================
+  # UpSnap: Wake-on-LAN Dashboard & API to Awaken 'balrog' (Gaming PC)
+  # ============================================================================
+  upsnap:
+    image: ghcr.io/seriousm4x/upsnap:4
+    container_name: upsnap
+    network_mode: host # Required for broadcasting L2 Wake-on-LAN magic packets
+    restart: unless-stopped
+    environment:
+      - TZ=${TZ:-America/Denver}
+      - UPSNAP_INTERVAL=@every 10s
+      - UPSNAP_SCAN_RANGE=${LAN_SUBNET:-192.168.1.0/24}
+    volumes:
+      - /opt/gandalf/upsnap:/app/pb_data
+
+networks:
+  mellon-net:
+    name: mellon-net
+    driver: bridge

@@ -1,0 +1,78 @@
+# ==============================================================================
+# Caddyfile for 'gandalf' (Perimeter & Split-Horizon Reverse Proxy)
+# ==============================================================================
+{
+	# Automatic HTTPS for public domains; internal CA for *.moria.lan
+	email {$ACME_EMAIL:admin@example.com}
+}
+
+# Reusable snippet restricting access strictly to local LAN & WireGuard/Tailscale VPN
+(lan_only) {
+	@blocked not remote_ip 10.0.0.0/8 172.16.0.0/12 192.168.0.0/16 100.64.0.0/10 127.0.0.1/8
+	respond @blocked "You shall not pass! (LAN/VPN Required)" 403
+}
+
+# ==============================================================================
+# 1. PUBLIC SERVICES (Shared with Friends & Family over 1 Gbps Fiber)
+# ==============================================================================
+
+# Palantir: Custom AI-Built Media App / Jellyfin Streaming on 'erebor'
+palantir.{$PUBLIC_DOMAIN} {
+	reverse_proxy {$EREBOR_IP}:8096
+}
+
+# Jellyseerr: One-Click Movie/Show Requests for Family
+request.{$PUBLIC_DOMAIN} {
+	reverse_proxy {$EREBOR_IP}:5055
+}
+
+# PocketID: Passkey SSO ("Speak, friend, and enter")
+auth.{$PUBLIC_DOMAIN} {
+	reverse_proxy pocketid:1411
+}
+
+# ==============================================================================
+# 2. INTERNAL MORIA.LAN SERVICES (Strictly Restricted to LAN & VPN)
+# ==============================================================================
+
+dns.{$LOCAL_DOMAIN} {
+	tls internal
+	import lan_only
+	reverse_proxy adguard:80
+}
+
+vault.{$LOCAL_DOMAIN} {
+	tls internal
+	import lan_only
+	reverse_proxy vaultwarden:80
+}
+
+git.{$LOCAL_DOMAIN} {
+	tls internal
+	import lan_only
+	reverse_proxy forgejo:3000
+}
+
+balrog.{$LOCAL_DOMAIN} {
+	tls internal
+	import lan_only
+	reverse_proxy 127.0.0.1:8090 # UpSnap Wake-on-LAN UI
+}
+
+palantir.{$LOCAL_DOMAIN} {
+	tls internal
+	import lan_only
+	reverse_proxy {$EREBOR_IP}:8096
+}
+
+photos.{$LOCAL_DOMAIN} {
+	tls internal
+	import lan_only
+	reverse_proxy {$EREBOR_IP}:2283 # Immich on erebor
+}
+
+code.{$LOCAL_DOMAIN} {
+	tls internal
+	import lan_only
+	reverse_proxy {$EREBOR_IP}:8443 # AI Coding Workbench on erebor
+}

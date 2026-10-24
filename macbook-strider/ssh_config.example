@@ -1,0 +1,26 @@
+# ==============================================================================
+# ~/.ssh/config for M1 MacBook Pro ('strider' - 32GB Unified Memory Workstation)
+# Allows instant SSH & Remote-IDE access to Moria Homelab nodes
+# ==============================================================================
+
+# Node 1: gandalf (Lenovo Yoga 900 - Edge, DNS, Reverse Proxy, Battery UPS)
+Host gandalf
+    HostName gandalf.moria.lan
+    User ubuntu
+    ForwardAgent yes
+    ServerAliveInterval 60
+
+# Node 2: erebor (i3-12100 Custom NAS, 28TB 'mithril' ZFS Pool, AI App Factory)
+Host erebor
+    HostName erebor.moria.lan
+    User ubuntu
+    ForwardAgent yes
+    ServerAliveInterval 60
+
+# Node 3: balrog (AMD 9800X3D + RTX 5070 Gaming PC - Auto-Woken via gandalf!)
+# Typing `ssh balrog` from your MacBook tells gandalf to send a Wake-on-LAN
+# magic packet if balrog is asleep, waits for it to come online, and connects.
+Host balrog
+    HostName balrog.moria.lan
+    User ubuntu
+    ProxyCommand ssh gandalf "if ! ping -c 1 -W 1 %h >/dev/null 2>&1; then wakeonlan AA:BB:CC:DD:EE:FF >&2; sleep 12; fi; nc %h %p"
