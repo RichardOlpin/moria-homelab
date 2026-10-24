@@ -1,0 +1,32 @@
+name: Validate Homelab Stacks & Scripts
+
+on:
+  pull_request:
+    branches: [main]
+
+jobs:
+  validate:
+    name: Validate Compose & Bootstrap Scripts
+    runs-on: ubuntu-24.04
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Validate Bash syntax on all scripts
+        run: |
+          bash -n nodes/gandalf/bootstrap-ubuntu.sh
+          bash -n nodes/erebor/bootstrap-nas.sh
+          bash -n nodes/erebor/scripts/optimize-for-tablet.sh
+          bash -n .githooks/pre-push
+
+      - name: Validate gandalf Docker Compose syntax
+        working-directory: nodes/gandalf
+        run: |
+          cp .env.example .env
+          docker compose config -q
+
+      - name: Validate erebor Docker Compose syntax
+        working-directory: nodes/erebor
+        run: |
+          cp .env.example .env
+          docker compose config -q
