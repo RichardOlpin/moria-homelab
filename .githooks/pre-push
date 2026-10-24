@@ -1,0 +1,24 @@
+#!/usr/bin/env bash
+# ==============================================================================
+# Git pre-push hook: Block direct pushes to 'main' or 'master'
+# All changes must go through a feature branch and Pull Request for history.
+# ==============================================================================
+set -euo pipefail
+
+protected_branches=("refs/heads/main" "refs/heads/master")
+
+while read -r local_ref local_sha remote_ref remote_sha; do
+    for branch in "${protected_branches[@]}"; do
+        if [[ "$remote_ref" == "$branch" ]]; then
+            echo "==============================================================================" >&2
+            echo " 🛑 YOU SHALL NOT PASS! Direct pushes to '${branch#refs/heads/}' are blocked." >&2
+            echo " Please push to a feature branch and open a Pull Request instead:" >&2
+            echo "   git checkout -b feat/your-change" >&2
+            echo "   git push -u origin feat/your-change" >&2
+            echo "==============================================================================" >&2
+            exit 1
+        fi
+    done
+done
+
+exit 0
