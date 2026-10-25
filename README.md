@@ -16,11 +16,15 @@ Declarative infrastructure, Ubuntu 24.04 LTS bootstrap scripts, and Docker Compo
 ## Repository Structure
 
 * [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md) — Full $1,000 hardware bill of materials, network topology diagrams, ZFS pool layout, and phased rollout blueprint.
+* [`autoinstall/`](autoinstall/) — Unattended Ubuntu Server 24.04 `cloud-init` autoinstall configs for `gandalf` and `erebor` + [`make-cidata-usb.sh`](autoinstall/make-cidata-usb.sh) macOS USB helper.
 * [`nodes/gandalf/bootstrap-ubuntu.sh`](nodes/gandalf/bootstrap-ubuntu.sh) — Configures Ubuntu 24.04 on the Lenovo Yoga 900 (Docker, lid-close ignore, 60% Lenovo battery conservation UPS mode, port 53 DNS prep).
 * [`nodes/gandalf/compose.yaml`](nodes/gandalf/compose.yaml) & [`nodes/gandalf/Caddyfile`](nodes/gandalf/Caddyfile) — Reverse proxy, split-horizon DNS, Passkey SSO, Vaultwarden, Forgejo, and Wake-on-LAN controller.
 * [`nodes/erebor/bootstrap-nas.sh`](nodes/erebor/bootstrap-nas.sh) — Configures Ubuntu 24.04 + OpenZFS (`mithril` RAIDZ1 pool), Intel QuickSync (`/dev/dri`), ZFS ARC tuning, and Time Machine dataset for the M1 MacBook Pro.
-* [`nodes/erebor/compose.yaml`](nodes/erebor/compose.yaml) — Jellyfin hardware-transcoding engine for **Palantir**, Immich photo cloud, `*arr` stack, and the 24/7 AI Coding Workbench.
-* [`nodes/erebor/scripts/optimize-for-tablet.sh`](nodes/erebor/scripts/optimize-for-tablet.sh) — Hardware-accelerated Intel QuickSync script to generate fast-downloading `Tablet 720p.mp4` files for Amazon Fire Tablets.
+* [`nodes/erebor/configs/`](nodes/erebor/configs/) — [`sanoid.conf`](nodes/erebor/configs/sanoid.conf) ZFS snapshot retention policy and [`smb.conf`](nodes/erebor/configs/smb.conf) Apple `vfs_fruit` wireless Time Machine & 2.5GbE LAN shares.
+* [`nodes/erebor/compose.yaml`](nodes/erebor/compose.yaml) — **Palantír** custom UI + Jellyfin hardware-transcoding engine, Immich photo cloud, `*arr` stack, and the 24/7 AI Coding Workbench.
+* [`nodes/erebor/scripts/`](nodes/erebor/scripts/) — [`optimize-for-tablet.sh`](nodes/erebor/scripts/optimize-for-tablet.sh) (Intel QuickSync 720p MP4 generator for Amazon Fire Tablets) and [`nightly-backup.sh`](nodes/erebor/scripts/nightly-backup.sh) (nightly Postgres + NVMe + `gandalf` backup to `mithril/backups`).
+* [`nodes/balrog/`](nodes/balrog/) — RTX 5070 on-demand CUDA stack ([`compose.yaml`](nodes/balrog/compose.yaml) for Immich CUDA ML, Ollama, and Faster-Whisper subtitles) + [`auto-sleep-watcher.sh`](nodes/balrog/scripts/auto-sleep-watcher.sh) idle suspend daemon.
+* [`apps/palantir/`](apps/palantir/) — Custom AI-built media discovery & Fire Tablet 1-tap offline download web app ([`server.py`](apps/palantir/server.py) & [`static/index.html`](apps/palantir/static/index.html)).
 * [`macbook-strider/ssh_config.example`](macbook-strider/ssh_config.example) — Drop-in `~/.ssh/config` for the M1 MacBook Pro (including SSH Agent Forwarding and automatic Wake-on-LAN on `ssh balrog`).
 * [`.githooks/pre-push`](.githooks/pre-push) — Local Git hook that blocks direct pushes to `main` so all changes are grouped and documented via Pull Requests.
 

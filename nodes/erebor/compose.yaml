@@ -2,6 +2,21 @@ name: erebor-core
 
 services:
   # ============================================================================
+  # Palantir Custom AI Frontend & Fire Tablet Portal (Port 8080)
+  # ============================================================================
+  palantir-ui:
+    build: ../../apps/palantir
+    container_name: palantir-ui
+    restart: unless-stopped
+    ports:
+      - "8080:8080"
+    environment:
+      - PALANTIR_PORT=8080
+      - JELLYFIN_URL=http://jellyfin:8096
+      - JELLYSEERR_URL=http://jellyseerr:5055
+      - OLLAMA_URL=http://balrog.moria.lan:11434
+
+  # ============================================================================
   # Palantir Media Engine (Jellyfin w/ Intel UHD 730 QuickSync Hardware Accel)
   # ============================================================================
   jellyfin:
