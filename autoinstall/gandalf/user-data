@@ -1,0 +1,71 @@
+#cloud-config
+# ==============================================================================
+# Ubuntu Server 24.04 LTS Unattended Autoinstall for Node 1: 'gandalf'
+# Hardware: 2015 Lenovo Yoga 900 (512GB Internal SSD, USB 2.5GbE Ethernet)
+# ==============================================================================
+autoinstall:
+  version: 1
+  locale: en_US.UTF-8
+  keyboard:
+    layout: us
+
+  # Automatically configure any plugged-in USB Ethernet adapter via DHCP
+  network:
+    version: 2
+    ethernets:
+      all-en:
+        match:
+          name: "en*"
+        dhcp4: true
+        optional: true
+      all-eth:
+        match:
+          name: "eth*"
+        dhcp4: true
+        optional: true
+
+  # Target the internal 512GB SSD (largest non-removable disk)
+  storage:
+    layout:
+      name: direct
+      match:
+        size: largest
+
+  identity:
+    hostname: gandalf
+    username: ubuntu
+    # Default fallback password 'mellon' (SSH password auth is disabled below;
+    # login uses GitHub SSH keys for RichardOlpin)
+    password: "$6$rounds=4096$mellonsalt$V8.Q4K1q5X6u5y9l3m7p8q2r4s6t8u0v2w4x6y8z0A2B4C6D8E0F2G4H6I8J0K2L4M6N8O0P2Q4R6S8T0U2V4."
+
+  ssh:
+    install-server: true
+    allow-pw: false
+
+  packages:
+    - openssh-server
+    - ssh-import-id
+    - git
+    - curl
+    - ca-certificates
+    - ethtool
+    - wakeonlan
+    - btop
+    - tmux
+
+  user-data:
+    timezone: America/Denver
+    disable_root: true
+    sudo: "ALL=(ALL) NOPASSWD:ALL"
+    runcmd:
+      - su - ubuntu -c "ssh-import-id gh:RichardOlpin"
+
+  late-commands:
+    # Ensure passwordless sudo (EC2 AL2023 style) for the 'ubuntu' user
+    - echo "ubuntu ALL=(ALL) NOPASSWD:ALL" > /target/etc/sudoers.d/90-ubuntu-nopasswd
+    - chmod 0440 /target/etc/sudoers.d/90-ubuntu-nopasswd
+    # Prevent laptop lid-close from suspending immediately on first boot
+    - sed -i 's/^#*HandleLidSwitch=.*/HandleLidSwitch=ignore/' /target/etc/systemd/logind.conf
+    - sed -i 's/^#*HandleLidSwitchExternalPower=.*/HandleLidSwitchExternalPower=ignore/' /target/etc/systemd/logind.conf
+    # Power off cleanly when installation finishes so USB stick can be removed
+    - shutdown -h now
