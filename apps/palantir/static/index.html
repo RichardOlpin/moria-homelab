@@ -349,6 +349,7 @@
           <div>
             <strong style="color:var(--cyan);font-size:0.95rem;">📱 Tailscale Android Access Active</strong>
             <div id="tsUrls" style="font-size:0.83rem;color:var(--muted);margin-top:0.25rem;">Detecting Tailscale IP...</div>
+            <div id="tokenUsageBar" style="font-size:0.81rem;color:#cbd5e1;margin-top:0.4rem;"></div>
           </div>
           <div style="display:flex;gap:0.5rem;flex-wrap:wrap;align-items:center;">
             <button class="mode-btn active" id="subTabChat" onclick="switchCompanionSub('chat')">💬 Live Conversation</button>
@@ -504,6 +505,11 @@
       companionCache = await res.json();
       document.getElementById('tsUrls').innerHTML =
         `Tailscale URL: <code style="color:#6ee7b7">${escapeHtml(companionCache.tailscale_url)}</code> &bull; Home Wi-Fi URL: <code style="color:#bae6fd">${escapeHtml(companionCache.lan_url)}</code>`;
+      if (companionCache.token_usage) {
+        const u = companionCache.token_usage;
+        document.getElementById('tokenUsageBar').innerHTML =
+          `📊 <strong style="color:#f59e0b">${escapeHtml(u.plan)}</strong> &bull; Turns: <code>${u.turns}</code> &bull; Fresh In: <code>${(u.input_tokens / 1e6).toFixed(2)}M</code> &bull; Cached: <code>${(u.cache_read_tokens / 1e6).toFixed(2)}M (${u.cache_hit_pct}%)</code> &bull; Out: <code>${(u.output_tokens / 1e3).toFixed(1)}K</code>`;
+      }
       document.getElementById('archContainer').textContent = companionCache.architecture_md || '';
       document.getElementById('logsContainer').textContent =
         (companionCache.recent_logs && companionCache.recent_logs.length)

@@ -364,6 +364,7 @@ def get_homelab_companion_data() -> dict:
 
     conversations: list[dict] = []
     all_messages: list[dict] = []
+    proj_turns = proj_in = proj_cache = proj_out = 0
     brain_root = Path.home() / ".gemini" / "antigravity" / "brain"
     if brain_root.exists():
         transcripts = sorted(
@@ -375,12 +376,18 @@ def get_homelab_companion_data() -> dict:
             cid = t_path.parent.parent.parent.name
             conv_msgs: list[dict] = []
             first_user_prompt = ""
+            c_turns = c_in = c_cache = c_out = 0
             try:
                 for line in t_path.read_text(encoding="utf-8", errors="replace").splitlines():
                     if not line.strip():
                         continue
                     step = json.loads(line)
                     step_type = step.get("type", "")
+                    if step_type == "PLANNER_RESPONSE":
+                        c_turns += 1
+                        c_in += int(step.get("input_tokens", 0) or 0)
+                        c_cache += int(step.get("cache_read_tokens", 0) or 0)
+                        c_out += int(step.get("output_tokens", 0) or 0)
                     content = (step.get("content") or "").strip()
                     if not content:
                         continue
@@ -410,6 +417,11 @@ def get_homelab_companion_data() -> dict:
             if not conv_msgs or "TruePrice" in first_user_prompt:
                 continue
 
+            proj_turns += c_turns
+            proj_in += c_in
+            proj_cache += c_cache
+            proj_out += c_out
+
             lower_first = first_user_prompt.lower()
             if "hardware" in lower_first or "surplus" in lower_first:
                 title = "🛒 Chat 2: Hardware & BYU Surplus"
@@ -434,10 +446,15 @@ def get_homelab_companion_data() -> dict:
                 "id": cid,
                 "title": title,
                 "count": len(conv_msgs),
+                "turns": c_turns,
+                "input_tokens": c_in,
+                "cache_read_tokens": c_cache,
+                "output_tokens": c_out,
                 "messages": conv_msgs[-50:],
             })
 
     all_messages.sort(key=lambda m: m.get("time", ""))
+    cache_pct = round((proj_cache / max(1, proj_in + proj_cache)) * 100, 1)
 
     recent_logs: list[str] = []
     if LOG_FILE.exists():
@@ -450,6 +467,14 @@ def get_homelab_companion_data() -> dict:
         "tailscale_url": f"http://{tailscale_ip}:{PORT}",
         "lan_url": f"http://{lan_ip}:{PORT}",
         "architecture_md": architecture_md,
+        "token_usage": {
+            "plan": "Google AI Pro (Flat Subscription)",
+            "turns": proj_turns,
+            "input_tokens": proj_in,
+            "cache_read_tokens": proj_cache,
+            "output_tokens": proj_out,
+            "cache_hit_pct": cache_pct,
+        },
         "conversations": conversations,
         "messages": all_messages[-60:],
         "recent_logs": recent_logs,
