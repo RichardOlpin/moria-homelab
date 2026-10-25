@@ -23,6 +23,7 @@ download_film() {
     local tablet_dest="$3"
     local title="$4"
 
+    mkdir -p "$(dirname "$dest")"
     if [[ -f "$dest" && -s "$dest" ]]; then
         echo "✓ Already downloaded: $title"
     else
@@ -38,26 +39,26 @@ download_film() {
 
 download_film \
     "https://download.blender.org/durian/trailer/sintel_trailer-720p.mp4" \
-    "${MEDIA_ROOT}/movies/Sintel (2010) - 1080p.mp4" \
-    "${MEDIA_ROOT}/movies/Sintel (2010) - Tablet 720p.mp4" \
+    "${MEDIA_ROOT}/movies/Sintel (2010)/Sintel (2010) - 1080p.mp4" \
+    "${MEDIA_ROOT}/movies/Sintel (2010)/Sintel (2010) - Tablet 720p.mp4" \
     "Sintel (2010) [Fantasy / Dragon Quest - 720p HD]"
 
 download_film \
     "https://archive.org/download/BigBuckBunny_124/Content/big_buck_bunny_720p_surround.mp4" \
-    "${MEDIA_ROOT}/kids-movies/Big Buck Bunny (2008) - 1080p.mp4" \
-    "${MEDIA_ROOT}/kids-movies/Big Buck Bunny (2008) - Tablet 720p.mp4" \
+    "${MEDIA_ROOT}/kids-movies/Big Buck Bunny (2008)/Big Buck Bunny (2008) - 1080p.mp4" \
+    "${MEDIA_ROOT}/kids-movies/Big Buck Bunny (2008)/Big Buck Bunny (2008) - Tablet 720p.mp4" \
     "Big Buck Bunny (2008) [Kids & Family Animation - Full 10m 720p HD Film]"
 
 download_film \
     "https://archive.org/download/Tears-of-Steel/tears_of_steel_720p.mp4" \
-    "${MEDIA_ROOT}/movies/Tears of Steel (2012) - 1080p.mp4" \
-    "${MEDIA_ROOT}/movies/Tears of Steel (2012) - Tablet 720p.mp4" \
+    "${MEDIA_ROOT}/movies/Tears of Steel (2012)/Tears of Steel (2012) - 1080p.mp4" \
+    "${MEDIA_ROOT}/movies/Tears of Steel (2012)/Tears of Steel (2012) - Tablet 720p.mp4" \
     "Tears of Steel (2012) [Cyberpunk Sci-Fi - Full 12m 720p HD Film]"
 
 download_film \
     "https://archive.org/download/ElephantsDream/ed_1024_512kb.mp4" \
-    "${MEDIA_ROOT}/movies/Elephants Dream (2006) - 1080p.mp4" \
-    "${MEDIA_ROOT}/movies/Elephants Dream (2006) - Tablet 720p.mp4" \
+    "${MEDIA_ROOT}/movies/Elephants Dream (2006)/Elephants Dream (2006) - 1080p.mp4" \
+    "${MEDIA_ROOT}/movies/Elephants Dream (2006)/Elephants Dream (2006) - Tablet 720p.mp4" \
     "Elephants Dream (2006) [Surreal Sci-Fi - Full 11m Film]"
 
 echo "=============================================================================="

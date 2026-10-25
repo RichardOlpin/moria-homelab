@@ -8,8 +8,11 @@
 # Ignore local media files, live server logs, and downloaded helper binaries for Palantir testing
 apps/palantir/media/
 apps/palantir/.bin/
+apps/palantir/.jellyfin/
 apps/palantir/palantir.log
 apps/palantir/mobile_inbox.jsonl
+__pycache__/
+*.pyc
 *.log
 *.mp4
 *.mkv
