@@ -13,12 +13,17 @@ Features:
   - One-click Free Open Movies seeder (/api/seed-movies -> seed-free-movies.sh).
   - Natural-language AI Mood & Runtime Search (/api/ai-search) with Ollama/LLM hook.
 """
+import datetime
 import json
 import os
 import platform
+import py_compile
 import re
 import shutil
 import subprocess
+import sys
+import threading
+import time
 import urllib.request
 from http.server import SimpleHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
@@ -28,10 +33,23 @@ PORT = int(os.environ.get("PALANTIR_PORT", "8080"))
 BASE_DIR = Path(__file__).parent
 STATIC_DIR = BASE_DIR / "static"
 BIN_DIR = BASE_DIR / ".bin"
+LOG_FILE = BASE_DIR / "palantir.log"
 MEDIA_DIR = Path(os.environ.get("PALANTIR_MEDIA_DIR", str(BASE_DIR / "media")))
 JELLYFIN_URL = os.environ.get("JELLYFIN_URL", "http://erebor.moria.lan:8096").rstrip("/")
 JELLYSEERR_URL = os.environ.get("JELLYSEERR_URL", "http://erebor.moria.lan:5055").rstrip("/")
 OLLAMA_URL = os.environ.get("OLLAMA_URL", "http://balrog.moria.lan:11434").rstrip("/")
+
+
+def log_event(message: str) -> None:
+    """Writes a timestamped log line to both stdout and apps/palantir/palantir.log."""
+    ts = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+    line = f"[{ts}] {message}"
+    print(line, flush=True)
+    try:
+        with open(LOG_FILE, "a", encoding="utf-8") as f:
+            f.write(line + "\n")
+    except OSError:
+        pass
 
 # Known metadata enrichment for Open Movies & Owned Classics
 KNOWN_METADATA = {
@@ -363,17 +381,39 @@ def get_homelab_companion_data() -> dict:
             except Exception:
                 pass
 
+    recent_logs: list[str] = []
+    if LOG_FILE.exists():
+        try:
+            recent_logs = LOG_FILE.read_text(encoding="utf-8", errors="replace").splitlines()[-80:]
+        except Exception:
+            pass
+
     return {
         "tailscale_url": f"http://{tailscale_ip}:{PORT}",
         "lan_url": f"http://{lan_ip}:{PORT}",
         "architecture_md": architecture_md,
         "messages": messages[-40:],
+        "recent_logs": recent_logs,
     }
 
 
 class PalantirHandler(SimpleHTTPRequestHandler):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, directory=str(STATIC_DIR), **kwargs)
+
+    def log_message(self, fmt: str, *args) -> None:
+        client_ip = self.client_address[0] if self.client_address else "unknown"
+        if client_ip.startswith("100."):
+            source = f"📱 Tailscale ({client_ip})"
+        elif client_ip.startswith("192.168.") or client_ip.startswith("10."):
+            source = f"🏠 Home Wi-Fi ({client_ip})"
+        else:
+            source = f"💻 Local ({client_ip})"
+
+        msg = fmt % args
+        range_hdr = self.headers.get("Range", "") if hasattr(self, "headers") and self.headers else ""
+        extra = f" [{range_hdr}]" if range_hdr and "/api/stream/" in getattr(self, "path", "") else ""
+        log_event(f"{source} -> {msg}{extra}")
 
     def send_json(self, payload: dict, status: int = 200) -> None:
         raw = json.dumps(payload).encode("utf-8")
@@ -555,10 +595,44 @@ class PalantirHandler(SimpleHTTPRequestHandler):
         self.send_json({"error": "Not found"}, status=404)
 
 
+def start_auto_reloader(server: ThreadingHTTPServer) -> None:
+    """Watches apps/palantir/server.py and hot-reloads the server when modified."""
+    script_path = Path(__file__).resolve()
+    try:
+        initial_mtime = script_path.stat().st_mtime
+    except OSError:
+        return
+
+    def watcher() -> None:
+        while True:
+            time.sleep(1.5)
+            try:
+                current_mtime = script_path.stat().st_mtime
+            except OSError:
+                continue
+            if current_mtime != initial_mtime:
+                try:
+                    py_compile.compile(str(script_path), doraise=True)
+                except Exception as exc:
+                    log_event(f"⚠️ Skipping hot-reload due to syntax error in server.py: {exc}")
+                    continue
+                log_event("🔄 Detected update to server.py — hot-reloading Palantír server...")
+                try:
+                    server.server_close()
+                except Exception:
+                    pass
+                os.execv(sys.executable, [sys.executable] + sys.argv)
+
+    t = threading.Thread(target=watcher, daemon=True)
+    t.start()
+
+
 def main() -> None:
+    ThreadingHTTPServer.allow_reuse_address = True
     server = ThreadingHTTPServer(("0.0.0.0", PORT), PalantirHandler)
-    print(f"==> Palantír Media Portal listening on http://localhost:{PORT}")
-    print(f"==> Media folder: {MEDIA_DIR}")
+    start_auto_reloader(server)
+    log_event(f"==> Palantír Media Portal listening on http://0.0.0.0:{PORT} (Auto-Reload + Live Log active)")
+    log_event(f"==> Media folder: {MEDIA_DIR} | Live log file: {LOG_FILE}")
     server.serve_forever()
 
 
