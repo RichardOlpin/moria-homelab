@@ -159,3 +159,59 @@ services:
       - /var/run/docker.sock:/var/run/docker.sock # Spawn preview containers directly
     ports:
       - "8443:8443"
+
+  # ============================================================================
+  # RomM: Self-Hosted Retro Game Library & Browser EmulatorJS (arcade.moria.lan)
+  # Play SNES/GBA/N64/PS1 in browser or on Fire Tablets w/ synced save states
+  # ============================================================================
+  romm:
+    image: rommapp/romm:latest
+    container_name: romm
+    restart: unless-stopped
+    environment:
+      - DB_HOST=romm-db
+      - DB_NAME=romm
+      - DB_USER=romm-user
+      - DB_PASSWD=${ROMM_DB_PASSWORD:-mithril_romm_pass}
+      - ROMM_AUTH_SECRET_KEY=${ROMM_AUTH_SECRET_KEY:-change_me_32_byte_hex_secret_key_for_romm}
+      - IGDB_CLIENT_ID=${IGDB_CLIENT_ID:-}
+      - IGDB_CLIENT_SECRET=${IGDB_CLIENT_SECRET:-}
+    volumes:
+      - /mnt/nvme/appdata/romm/resources:/romm/resources
+      - /mnt/nvme/appdata/romm/redis-data:/redis-data
+      - /mnt/mithril/roms/library:/romm/library
+      - /mnt/mithril/roms/assets:/romm/assets
+      - /mnt/mithril/roms/config:/romm/config
+    ports:
+      - "8098:8080"
+    depends_on:
+      - romm-db
+
+  romm-db:
+    image: mariadb:11
+    container_name: romm-db
+    restart: unless-stopped
+    environment:
+      - MYSQL_ROOT_PASSWORD=${ROMM_DB_ROOT_PASSWORD:-mithril_romm_root}
+      - MYSQL_DATABASE=romm
+      - MYSQL_USER=romm-user
+      - MYSQL_PASSWORD=${ROMM_DB_PASSWORD:-mithril_romm_pass}
+    volumes:
+      - /mnt/nvme/appdata/romm-db:/var/lib/mysql
+
+  # ============================================================================
+  # Papra: Minimalist Document & Receipt Vault (docs.moria.lan)
+  # ============================================================================
+  papra:
+    image: ghcr.io/papra-hq/papra:latest
+    container_name: papra
+    restart: unless-stopped
+    user: "${PUID:-1000}:${PGID:-1000}"
+    environment:
+      - APP_BASE_URL=https://docs.moria.lan
+      - AUTH_SECRET=${PAPRA_AUTH_SECRET:-change_me_papra_secret_key}
+    volumes:
+      - /mnt/mithril/cloud/papra:/app/data
+    ports:
+      - "1221:1221"
+
