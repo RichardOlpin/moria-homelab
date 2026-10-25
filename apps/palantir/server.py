@@ -662,7 +662,7 @@ class PalantirHandler(SimpleHTTPRequestHandler):
                 "role": "user",
                 "source": f"android ({client_ip})",
                 "conversation_id": conv_id,
-                "time": datetime.datetime.now(datetime.timezone.utc).isoformat(),
+                "time": datetime.datetime.now(datetime.timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"),
                 "text": text,
             }
             with open(MOBILE_INBOX_FILE, "a", encoding="utf-8") as f:
