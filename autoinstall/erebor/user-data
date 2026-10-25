@@ -1,0 +1,65 @@
+#cloud-config
+# ==============================================================================
+# Ubuntu Server 24.04 LTS Unattended Autoinstall for Node 2: 'erebor'
+# Hardware: Custom i3-12100 mATX NAS (1TB M.2 NVMe OS + 3x 14TB SATA HDDs)
+# ==============================================================================
+autoinstall:
+  version: 1
+  locale: en_US.UTF-8
+  keyboard:
+    layout: us
+
+  network:
+    version: 2
+    ethernets:
+      all-en:
+        match:
+          name: "en*"
+        dhcp4: true
+        optional: true
+
+  # CRITICAL NAS SAFETY: Strictly target ONLY the M.2 NVMe SSD (/dev/nvme0n1)
+  # so the Ubuntu installer never touches the 3x 14TB SATA HDDs for ZFS!
+  storage:
+    layout:
+      name: direct
+      match:
+        path: /dev/nvme0n1
+
+  identity:
+    hostname: erebor
+    username: ubuntu
+    password: "$6$rounds=4096$mellonsalt$V8.Q4K1q5X6u5y9l3m7p8q2r4s6t8u0v2w4x6y8z0A2B4C6D8E0F2G4H6I8J0K2L4M6N8O0P2Q4R6S8T0U2V4."
+
+  ssh:
+    install-server: true
+    allow-pw: false
+
+  packages:
+    - openssh-server
+    - ssh-import-id
+    - zfsutils-linux
+    - sanoid
+    - samba
+    - smartmontools
+    - intel-gpu-tools
+    - vainfo
+    - git
+    - curl
+    - btop
+    - tmux
+
+  user-data:
+    timezone: America/Denver
+    disable_root: true
+    sudo: "ALL=(ALL) NOPASSWD:ALL"
+    runcmd:
+      - su - ubuntu -c "ssh-import-id gh:RichardOlpin"
+
+  late-commands:
+    - echo "ubuntu ALL=(ALL) NOPASSWD:ALL" > /target/etc/sudoers.d/90-ubuntu-nopasswd
+    - chmod 0440 /target/etc/sudoers.d/90-ubuntu-nopasswd
+    - mkdir -p /target/mnt/nvme/{appdata,workspaces,stacks}
+    - mkdir -p /target/mnt/mithril
+    - chown -R 1000:1000 /target/mnt/nvme
+    - shutdown -h now
