@@ -1,0 +1,351 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>PALANTÍR — Moria Media & Fire Tablet Portal</title>
+  <style>
+    :root {
+      --bg: #0b0e14;
+      --panel: #131822;
+      --border: #232c3d;
+      --gold: #eab308;
+      --cyan: #38bdf8;
+      --emerald: #10b981;
+      --text: #f1f5f9;
+      --muted: #94a3b8;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      background: radial-gradient(circle at top, #161f30 0%, var(--bg) 60%);
+      color: var(--text);
+      min-height: 100vh;
+      padding-bottom: 4rem;
+    }
+    header {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      justify-content: space-between;
+      gap: 1rem;
+      padding: 1.25rem 2rem;
+      border-bottom: 1px solid var(--border);
+      background: rgba(11, 14, 20, 0.85);
+      backdrop-filter: blur(12px);
+      position: sticky;
+      top: 0;
+      z-index: 20;
+    }
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+    }
+    .orb {
+      width: 34px;
+      height: 34px;
+      border-radius: 50%;
+      background: radial-gradient(circle at 35% 35%, #38bdf8, #1d4ed8 60%, #090d16 100%);
+      box-shadow: 0 0 18px rgba(56, 189, 248, 0.55);
+    }
+    .brand h1 {
+      font-size: 1.25rem;
+      letter-spacing: 0.14em;
+      font-weight: 700;
+    }
+    .brand span {
+      display: block;
+      font-size: 0.75rem;
+      color: var(--muted);
+      letter-spacing: 0.04em;
+    }
+    .nav-modes {
+      display: flex;
+      gap: 0.5rem;
+      flex-wrap: wrap;
+    }
+    .mode-btn {
+      background: var(--panel);
+      color: var(--text);
+      border: 1px solid var(--border);
+      padding: 0.55rem 1rem;
+      border-radius: 999px;
+      cursor: pointer;
+      font-size: 0.85rem;
+      font-weight: 600;
+      transition: all 0.15s ease;
+    }
+    .mode-btn.active {
+      background: rgba(56, 189, 248, 0.15);
+      border-color: var(--cyan);
+      color: var(--cyan);
+    }
+    main {
+      max-width: 1240px;
+      margin: 2rem auto;
+      padding: 0 1.5rem;
+    }
+    .search-hero {
+      background: var(--panel);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 1.5rem;
+      margin-bottom: 2rem;
+      box-shadow: 0 12px 32px rgba(0, 0, 0, 0.35);
+    }
+    .search-row {
+      display: flex;
+      gap: 0.75rem;
+      flex-wrap: wrap;
+    }
+    .search-input {
+      flex: 1;
+      min-width: 260px;
+      background: #0b0e14;
+      border: 1px solid var(--border);
+      color: var(--text);
+      padding: 0.85rem 1.1rem;
+      border-radius: 10px;
+      font-size: 0.95rem;
+    }
+    .btn-primary, .btn-gold {
+      border: none;
+      padding: 0.85rem 1.25rem;
+      border-radius: 10px;
+      font-weight: 600;
+      cursor: pointer;
+      font-size: 0.9rem;
+    }
+    .btn-primary {
+      background: var(--cyan);
+      color: #06121d;
+    }
+    .btn-gold {
+      background: rgba(234, 179, 8, 0.16);
+      color: var(--gold);
+      border: 1px solid rgba(234, 179, 8, 0.4);
+    }
+    .quick-chips {
+      display: flex;
+      gap: 0.5rem;
+      flex-wrap: wrap;
+      margin-top: 0.9rem;
+      align-items: center;
+    }
+    .chip {
+      font-size: 0.78rem;
+      padding: 0.35rem 0.75rem;
+      border-radius: 999px;
+      background: rgba(255, 255, 255, 0.05);
+      color: var(--muted);
+      cursor: pointer;
+      border: 1px solid transparent;
+    }
+    .chip:hover {
+      border-color: var(--cyan);
+      color: var(--text);
+    }
+    .status-banner {
+      margin: 1rem 0 1.5rem;
+      font-size: 0.9rem;
+      color: var(--cyan);
+    }
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+      gap: 1.25rem;
+    }
+    .card {
+      background: var(--panel);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+    }
+    .poster {
+      height: 150px;
+      padding: 1rem;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+    }
+    .badges {
+      display: flex;
+      gap: 0.4rem;
+      flex-wrap: wrap;
+    }
+    .badge {
+      font-size: 0.7rem;
+      font-weight: 700;
+      padding: 0.2rem 0.55rem;
+      border-radius: 6px;
+      background: rgba(0, 0, 0, 0.65);
+      color: #fff;
+    }
+    .badge.tablet {
+      background: rgba(16, 185, 129, 0.25);
+      border: 1px solid var(--emerald);
+      color: #6ee7b7;
+    }
+    .card-body {
+      padding: 1.1rem;
+      display: flex;
+      flex-direction: column;
+      gap: 0.6rem;
+      flex: 1;
+    }
+    .card-title {
+      font-size: 1.05rem;
+      font-weight: 700;
+    }
+    .meta {
+      font-size: 0.8rem;
+      color: var(--muted);
+    }
+    .vibe {
+      font-size: 0.83rem;
+      color: #cbd5e1;
+      line-height: 1.4;
+    }
+    .actions {
+      padding: 0 1.1rem 1.1rem;
+      display: flex;
+      flex-direction: column;
+      gap: 0.5rem;
+    }
+    .btn-stream, .btn-tablet {
+      width: 100%;
+      padding: 0.65rem;
+      border-radius: 8px;
+      font-weight: 600;
+      font-size: 0.84rem;
+      cursor: pointer;
+      border: 1px solid var(--border);
+      text-align: center;
+      text-decoration: none;
+    }
+    .btn-stream {
+      background: rgba(56, 189, 248, 0.12);
+      color: var(--cyan);
+      border-color: rgba(56, 189, 248, 0.35);
+    }
+    .btn-tablet {
+      background: rgba(16, 185, 129, 0.15);
+      color: #6ee7b7;
+      border-color: rgba(16, 185, 129, 0.4);
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <div class="brand">
+      <div class="orb"></div>
+      <div>
+        <h1>PALANTÍR</h1>
+        <span>Moria Media &bull; QuickSync 4K &bull; Fire Tablet Sync</span>
+      </div>
+    </div>
+    <div class="nav-modes">
+      <button class="mode-btn active" onclick="loadLibrary('all', this)">All Library (4K / HDR)</button>
+      <button class="mode-btn" onclick="loadLibrary('tablet', this)">🔥 Fire Tablet Offline Drawer</button>
+      <button class="mode-btn" onclick="loadLibrary('kids', this)">🧒 Kids Safe Vault</button>
+    </div>
+  </header>
+
+  <main>
+    <section class="search-hero">
+      <div class="search-row">
+        <input id="aiQuery" class="search-input" type="text" placeholder="Ask Palantír by mood or runtime (e.g. 'something funny under 100 minutes for a flight')..." onkeydown="if(event.key==='Enter') runAiSearch()" />
+        <button class="btn-primary" onclick="runAiSearch()">AI Mood Search</button>
+        <button class="btn-gold" onclick="requestMissing()">+ Request Missing Title (Radarr/Sonarr)</button>
+      </div>
+      <div class="quick-chips">
+        <span style="font-size:0.78rem;color:var(--muted);">Try:</span>
+        <button class="chip" onclick="quickSearch('under 100 minutes flight')">✈️ Under 100m for Flight</button>
+        <button class="chip" onclick="quickSearch('kids family tablet road trip')">🔥 Kids Fire Tablet Pack</button>
+        <button class="chip" onclick="quickSearch('epic fantasy Middle-earth')">🗡️ Epic Middle-earth Fantasy</button>
+        <button class="chip" onclick="quickSearch('rainy cyber-noir sci-fi')">🌧️ Rainy Cyber-Noir</button>
+      </div>
+    </section>
+
+    <div id="statusBanner" class="status-banner"></div>
+    <section id="mediaGrid" class="grid"></section>
+  </main>
+
+  <script>
+    function renderItems(items, bannerText) {
+      document.getElementById('statusBanner').textContent = bannerText || '';
+      const grid = document.getElementById('mediaGrid');
+      grid.innerHTML = items.map(item => `
+        <article class="card">
+          <div>
+            <div class="poster" style="background: ${item.poster_gradient}">
+              <div class="badges">
+                ${item.resolutions.map(r => `<span class="badge ${r.includes('Tablet') ? 'tablet' : ''}">${r}</span>`).join('')}
+              </div>
+              <span class="badge" style="align-self:flex-start">${item.rating} &bull; ${item.runtime_min}m</span>
+            </div>
+            <div class="card-body">
+              <div class="card-title">${item.title} (${item.year})</div>
+              <div class="meta">${item.genres.join(' • ')}</div>
+              <p class="vibe">${item.vibe}</p>
+            </div>
+          </div>
+          <div class="actions">
+            <button class="btn-stream" onclick="alert('Launching Direct Play / QuickSync HLS Stream from erebor.moria.lan:8096 for: ${item.title}')">▶ Watch Stream (4K / Direct Play)</button>
+            ${item.tablet_ready ? `<button class="btn-tablet" onclick="alert('Starting direct Wi-Fi download of pre-optimized ${item.title} - Tablet 720p.mp4 (${item.tablet_size_mb} MB) to Fire Tablet SD card!')">⬇ Save to Fire Tablet (${item.tablet_size_mb} MB MP4)</button>` : ''}
+          </div>
+        </article>
+      `).join('');
+    }
+
+    async function loadLibrary(mode, btnEl) {
+      if (btnEl) {
+        document.querySelectorAll('.mode-btn').forEach(b => b.classList.remove('active'));
+        btnEl.classList.add('active');
+      }
+      const res = await fetch(`/api/library?mode=${mode}`);
+      const data = await res.json();
+      const label = mode === 'tablet'
+        ? '🔥 Showing pre-optimized 720p H.264 MP4s ready for 15-second Amazon Fire Tablet download'
+        : mode === 'kids'
+        ? '🧒 Kids Safe Vault (/mnt/mithril/media/kids-*) — Parental Lock Active'
+        : `Connected to ${data.engine} (${data.items.length} titles)`;
+      renderItems(data.items, label);
+    }
+
+    async function runAiSearch() {
+      const query = document.getElementById('aiQuery').value;
+      const res = await fetch('/api/ai-search', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ query })
+      });
+      const data = await res.json();
+      renderItems(data.items, `✨ ${data.explanation}`);
+    }
+
+    function quickSearch(q) {
+      document.getElementById('aiQuery').value = q;
+      runAiSearch();
+    }
+
+    async function requestMissing() {
+      const title = prompt("Enter a Movie or TV Show to grab via Radarr/Sonarr + pre-encode for Fire Tablet:");
+      if (!title) return;
+      const res = await fetch('/api/request', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ title })
+      });
+      const data = await res.json();
+      document.getElementById('statusBanner').textContent = `✅ ${data.message}`;
+    }
+
+    loadLibrary('all');
+  </script>
+</body>
+</html>
