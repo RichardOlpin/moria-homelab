@@ -59,12 +59,41 @@ flowchart TB
 
 ---
 
-## 2. The $1,000 Custom-Built NAS Bill of Materials (BOM)
+## 2. `erebor` Hardware Bill of Materials (BOM)
 
-Building the NAS yourself gives you desktop single-thread speed (huge for Docker builds and AI coding), 32GB of RAM for ZFS ARC caching, native SATA ports, and standard replaceable parts.
+### Option A (Top Budget Choice — ~$250 to $395): BYU Surplus Dell OptiPlex 7070 + ZFS Mirror
+Because you live near **BYU Surplus in Provo** ([`byuonlinesurplus` on eBay](https://www.ebay.com/str/byuonlinesurplus), with free local warehouse pickup), a surplus **Dell OptiPlex 7070 (`i5-9500`)** cuts the server cost by **60–75%** while keeping 6 desktop cores, Intel QuickSync 4K HDR transcoding, NVMe SSD boot/appdata, and ZFS redundancy.
 
-> [!IMPORTANT]
-> **Builder Tip (mATX vs. Mini-ITX)**: Go with a **Micro-ATX (mATX)** motherboard + case (**Jonsbo N4** or **Fractal Node 804**). mATX boards cost ~$50 less than Mini-ITX, give you 4 RAM slots instead of 2, and include extra PCIe slots so you can easily drop in a $25 LSI HBA card or 10GbE NIC later.
+| Component | Recommended Part & Source | Est. Price | Why This Part |
+| :--- | :--- | :--- | :--- |
+| **Base Server (`erebor`)** | **BYU Online Surplus** (Free Provo Pickup): [Dell OptiPlex 7070 (`i5-9500` 3.0GHz, 8GB DDR4, 256GB SSD)](https://www.ebay.com/itm/168664126451) *(or [Listing B (`256gb SSD`)](https://www.ebay.com/itm/168664190631))* | **$145** *(or ~$120 via Best Offer)* | 6-core `i5-9500` with **Intel UHD 630 QuickSync** (3–4x 4K HDR streams at ~12W idle), 4x DDR4 slots, included 256GB SSD for Ubuntu + Docker, and internal SATA ports. |
+| **Hard Drives (`mithril`)** | **1x or 2x 14TB** Seagate Exos X16/X18 or WD Ultrastar HC530 (Recertified, ServerPartDeals / GoHardDrive) | **$115** *(1 drive)* or **$220** *(2-drive ZFS Mirror)* | Start with 1 drive ($115) in the native 3.5" bay and run `zpool attach mithril <disk1> <disk2>` anytime later to convert into a redundant 2-drive ZFS Mirror with zero downtime. |
+| **RAM Upgrade *(Optional)* ** | 16GB (2x8GB) DDR4-2666/3200 Desktop UDIMM | **$0 today** *(+$25 later)* | The included 8GB DDR4 runs the full stack on day one; dropping 2x8GB into the empty slots bumps total RAM to **24GB** for larger ZFS ARC cache. |
+| **2nd Bay Adapter *(If SFF)* ** | SATA Power Y-Splitter + Optical-Bay 3.5" Mount | **$7** | Lets the slim SFF chassis power and mount the 2nd 3.5" HDD in the optical drive spot. |
+| **Total (Budget Build)** | | **~$260 (1-Drive) / ~$395 (Mirrored)** | **Saves ~$600–$735** vs. a custom build while running every single Moria service at full speed. |
+
+---
+
+### How the $145 OptiPlex 7070 Compares to More Expensive Options ($250–$995)
+
+When comparing the **$145 BYU Surplus OptiPlex 7070 (`i5-9500`)** against pricier **$220–$350 eBay listings** (such as `i7-9700` / 10th–11th Gen OptiPlex 7080/7090 towers, or pre-upgraded 16GB/32GB/1TB SSD configs) and the **$995 custom mATX build**:
+
+| Feature / Workload | **$145 BYU Surplus OptiPlex 7070 (`i5-9500`, 8GB, 256GB)** | **$230–$350 Pricier eBay Desktop (`i7-9700` / `i5-10500`, 16–32GB, 512GB–1TB)** | **$995 Custom mATX Build (`i3-12100`, 32GB, Jonsbo N4)** |
+| :--- | :--- | :--- | :--- |
+| **4K Jellyfin / `Palantír` Transcoding** | **Identical** (Intel UHD 630 QuickSync handles 3–4x 4K HDR10 streams in hardware) | **Identical** (`i7-9700` & 10th-Gen `i5-10500` use the **exact same UHD 630 QuickSync silicon**) | **Slightly newer** (UHD 730 adds AV1 decode, but same H.264/HEVC output for Fire Tablets & TVs) |
+| **Heavy AI / ML Jobs (Immich, Whisper)** | Offloaded to **`balrog` (RTX 5070)** & **`strider` (M1 32GB)** anyway | Zero real-world difference because `balrog`'s RTX 5070 is 30x faster than any CPU | Zero real-world difference |
+| **RAM & SSD Value** | Cheaper to buy a $25 16GB DDR4 kit yourself than pay an eBay reseller a $100+ markup | Often charges $100–$150 extra for $30 worth of RAM/SSD upgrades | Brand-new parts, 4x DIMM slots |
+| **3.5" Hard Drive Capacity** | **1–2x 3.5" HDDs** (SFF) or **2–3x 3.5" HDDs** (Tower/MT) → up to **14TB–28TB usable** | **1–3x 3.5" HDDs** (same Dell chassis limitations) | **6–10x 3.5" HDD bays** for massive future multi-vdev arrays |
+| **Shipping & Return Risk** | **$0 local pickup in Provo** + backed by BYU Surplus | Often $25–$45 shipping or baked into price | Free shipping on new retail parts |
+
+> [!TIP]
+> **Bottom Line on Pricier eBay OptiPlexes ($220–$350):** Third-party eBay refurbishers routinely charge **$100–$150 extra** just for bumping an OptiPlex from 8GB to 16GB/32GB RAM or swapping in an `i7-9700` or 10th-gen `i5-10500`. Because Intel 7th, 8th, 9th, and 10th Gen CPUs all share the **exact same UHD 630 QuickSync media engine**, and because your heavy AI workloads already run on **`balrog` (RTX 5070)** and **`strider` (M1 MacBook Pro)**, paying extra for a pricier eBay desktop buys you almost zero noticeable performance for `erebor`. Grab the **$145 BYU Surplus 7070** locally and spend the money you saved on hard drives!
+
+---
+
+### Option B (Maximum Expansion DIY Build — ~$995): Custom i3-12100 mATX NAS
+
+If you ever outgrow 2 hard drives and want a 6-to-10-bay hot-swap NAS case with 2.5GbE and PCIe HBA expansion:
 
 | Component | Recommended Part | Est. Price | Why This Part |
 | :--- | :--- | :--- | :--- |

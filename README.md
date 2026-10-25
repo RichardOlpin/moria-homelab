@@ -9,13 +9,13 @@ Declarative infrastructure, Ubuntu 24.04 LTS bootstrap scripts, and Docker Compo
 | Hostname | Hardware | OS | Role & Workloads |
 | :--- | :--- | :--- | :--- |
 | **`gandalf`** | 2015 Lenovo Yoga 900 (i7-6500U, 16GB RAM, 512GB SSD, built-in 60%-capped battery UPS) | Ubuntu Server 24.04 LTS | **Perimeter Gatekeeper & Always-On Infra**: Caddy + CrowdSec, AdGuard Home (`*.moria.lan` DNS), PocketID Passkey SSO, Vaultwarden, Forgejo Git, UpSnap (Wake-on-LAN). |
-| **`erebor`** | Custom mATX NAS (Intel i3-12100 UHD 730 QuickSync, 32GB RAM, 1TB NVMe, **3x 14TB ZFS RAIDZ1 `mithril` = 28TB usable**) | Ubuntu Server 24.04 LTS + OpenZFS | **Storage Core & AI App Factory**: ZFS pool `mithril`, `Palantir` (Jellyfin QuickSync engine + custom AI UI), Immich, `*arr` suite, Mac Time Machine SMB target, 24/7 AI coding containers. |
+| **`erebor`** | **Top Budget Choice:** BYU Surplus Dell OptiPlex 7070 (`i5-9500` UHD 630 QuickSync, 8GB–24GB DDR4, 256GB SSD, **1–2x 14TB ZFS Mirror `mithril`**) *— or Custom i3-12100 mATX 3x 14TB RAIDZ1 NAS* | Ubuntu Server 24.04 LTS + OpenZFS | **Storage Core & AI App Factory**: ZFS pool `mithril`, `Palantir` (Jellyfin QuickSync engine + custom AI UI), Immich, `*arr` suite, Mac Time Machine SMB target, 24/7 AI coding containers. |
 | **`balrog`** | Gaming PC (AMD 9800X3D, Nvidia RTX 5070, 1TB SSD) | Windows / WSL2 or Dual-Boot | **On-Demand GPU Beast (Wake-on-LAN)**: Woken automatically by `gandalf` for Immich ML facial/CLIP indexing, Whisper subtitle generation, `pgvector` embeddings, and AV1 batch encoding. |
 | **`strider`** | M1 MacBook Pro (32GB Unified Memory, 1TB SSD) | macOS | **Command Workstation & High-VRAM Local LLM Host**: Connects to `erebor` & `gandalf` over Remote-SSH, backs up automatically via Time Machine to `mithril/timemachine`, and can run 27B–32B parameter local models in 32GB Unified Memory. |
 
 ## Repository Structure
 
-* [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md) — Full $1,000 hardware bill of materials, network topology diagrams, ZFS pool layout, and phased rollout blueprint.
+* [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md) — Hardware Bill of Materials (**~$250–$395 BYU Surplus Dell OptiPlex 7070 Top Budget Choice** vs. $995 custom mATX NAS), network topology diagrams, ZFS pool layout, and phased rollout blueprint.
 * [`autoinstall/`](autoinstall/) — Unattended Ubuntu Server 24.04 `cloud-init` autoinstall configs for `gandalf` and `erebor` + [`make-cidata-usb.sh`](autoinstall/make-cidata-usb.sh) macOS USB helper.
 * [`nodes/gandalf/bootstrap-ubuntu.sh`](nodes/gandalf/bootstrap-ubuntu.sh) — Configures Ubuntu 24.04 on the Lenovo Yoga 900 (Docker, lid-close ignore, 60% Lenovo battery conservation UPS mode, port 53 DNS prep).
 * [`nodes/gandalf/compose.yaml`](nodes/gandalf/compose.yaml) & [`nodes/gandalf/Caddyfile`](nodes/gandalf/Caddyfile) — Reverse proxy, split-horizon DNS, Passkey SSO, Vaultwarden, Forgejo, and Wake-on-LAN controller.
