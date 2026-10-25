@@ -100,6 +100,15 @@ KNOWN_METADATA = {
         "vibe": "Surreal industrial sci-fi exploration inside a giant cavernous machine world",
         "poster_gradient": "linear-gradient(135deg, #5a189a, #10002b)",
     },
+    "rudolph the rednosed reindeer": {
+        "title": "Rudolph the Red-Nosed Reindeer",
+        "year": 1964,
+        "runtime_min": 52,
+        "rating": "G",
+        "genres": ["Animation", "Holiday", "Family", "Classic"],
+        "vibe": "Beloved Rankin/Bass stop-motion holiday classic narrated by Burl Ives as Sam the Snowman",
+        "poster_gradient": "linear-gradient(135deg, #b91c1c, #1e3a8a)",
+    },
 }
 
 DEMO_PREVIEW_ITEMS = [
@@ -175,15 +184,23 @@ def ensure_yt_dlp() -> str:
 def trigger_jellyfin_refresh() -> None:
     """Notifies local Jellyfin server on :8096 to refresh libraries."""
     try:
-        req = urllib.request.Request(
-            "http://127.0.0.1:8096/Library/Refresh",
-            data=b"",
-            headers={
-                "Authorization": "MediaBrowser Client=\"Palantir\", Device=\"Strider\", DeviceId=\"strider-1\", Version=\"1.0.0\""
-            },
+        base_auth = "MediaBrowser Client=\"Palantir\", Device=\"Strider\", DeviceId=\"strider-1\", Version=\"1.0.0\""
+        auth_req = urllib.request.Request(
+            "http://127.0.0.1:8096/Users/AuthenticateByName",
+            data=json.dumps({"Username": "laceylamb", "Pw": ""}).encode(),
+            headers={"Content-Type": "application/json", "Authorization": base_auth},
             method="POST",
         )
-        urllib.request.urlopen(req, timeout=2)
+        with urllib.request.urlopen(auth_req, timeout=3) as r:
+            token = json.loads(r.read())["AccessToken"]
+
+        refresh_req = urllib.request.Request(
+            "http://127.0.0.1:8096/Library/Refresh",
+            data=b"",
+            headers={"Authorization": f"{base_auth}, Token=\"{token}\""},
+            method="POST",
+        )
+        urllib.request.urlopen(refresh_req, timeout=3)
     except Exception:
         pass
 
