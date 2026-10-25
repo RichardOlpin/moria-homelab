@@ -55,8 +55,11 @@ if [[ -n "${SUDO_USER:-}" ]]; then
     echo "    Added '$SUDO_USER' to docker, render, and video groups (for Intel QuickSync /dev/dri)."
 fi
 
-echo "==> [4/6] Tuning ZFS ARC Memory Cap (Max 16GB of 32GB RAM so Docker/AI has 16GB free)..."
-echo "options zfs zfs_arc_max=17179869184" > /etc/modprobe.d/zfs.conf
+echo "==> [4/7] Tuning ZFS ARC Memory Cap (50% of total RAM so Docker/AI always has 50% free)..."
+TOTAL_MEM_BYTES=$(awk '/MemTotal/ {print $2 * 1024}' /proc/meminfo)
+ARC_MAX_BYTES=$(( TOTAL_MEM_BYTES / 2 ))
+echo "options zfs zfs_arc_max=${ARC_MAX_BYTES}" > /etc/modprobe.d/zfs.conf
+echo "    Set zfs_arc_max=${ARC_MAX_BYTES} bytes (~$(( ARC_MAX_BYTES / 1024 / 1024 / 1024 ))GB)."
 
 echo "==> [5/7] Preparing fast NVMe directories for Docker & AI Workspaces..."
 mkdir -p /mnt/nvme/{appdata,workspaces,stacks}
@@ -85,22 +88,34 @@ cat << 'EOF'
 ==============================================================================
  'erebor' Bootstrap Complete!
 ==============================================================================
-When your 3x 14TB drives are installed, verify their IDs with:
+Verify your installed hard drive IDs with:
   ls -l /dev/disk/by-id/ | grep -v part
 
-Then create your 28TB usable 'mithril' ZFS RAIDZ1 pool using:
-
+OPTION A1 — Top Budget Start (Dell OptiPlex 7070 w/ 1x 14TB Drive, expandable to Mirror later):
   sudo zpool create -f \
-    -o ashift=12 \
-    -o autotrim=on \
-    -O acltype=posixacl \
-    -O xattr=sa \
-    -O dnodesize=auto \
-    -O compression=lz4 \
-    -O normalization=formD \
-    -O relatime=on \
-    -m /mnt/mithril \
-    mithril raidz1 \
+    -o ashift=12 -o autotrim=on \
+    -O acltype=posixacl -O xattr=sa -O dnodesize=auto \
+    -O compression=lz4 -O normalization=formD -O relatime=on \
+    -m /mnt/mithril mithril \
+    /dev/disk/by-id/ata-DRIVE_1
+  # Later, convert live to a redundant 2-drive ZFS Mirror without losing data:
+  # sudo zpool attach mithril /dev/disk/by-id/ata-DRIVE_1 /dev/disk/by-id/ata-DRIVE_2
+
+OPTION A2 — Top Budget Redundant Start (Dell OptiPlex 7070 w/ 2x 14TB ZFS Mirror = 14TB usable):
+  sudo zpool create -f \
+    -o ashift=12 -o autotrim=on \
+    -O acltype=posixacl -O xattr=sa -O dnodesize=auto \
+    -O compression=lz4 -O normalization=formD -O relatime=on \
+    -m /mnt/mithril mithril mirror \
+    /dev/disk/by-id/ata-DRIVE_1 \
+    /dev/disk/by-id/ata-DRIVE_2
+
+OPTION B — Custom mATX 3-Drive Build (3x 14TB ZFS RAIDZ1 = 28TB usable):
+  sudo zpool create -f \
+    -o ashift=12 -o autotrim=on \
+    -O acltype=posixacl -O xattr=sa -O dnodesize=auto \
+    -O compression=lz4 -O normalization=formD -O relatime=on \
+    -m /mnt/mithril mithril raidz1 \
     /dev/disk/by-id/ata-DRIVE_1 \
     /dev/disk/by-id/ata-DRIVE_2 \
     /dev/disk/by-id/ata-DRIVE_3
