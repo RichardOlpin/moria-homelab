@@ -66,11 +66,12 @@ Because you live near **BYU Surplus in Provo** ([`byuonlinesurplus` on eBay](htt
 
 | Component | Recommended Part & Source | Est. Price | Why This Part |
 | :--- | :--- | :--- | :--- |
-| **Base Server (`erebor`)** | **BYU Online Surplus** (Free Provo Pickup): [Dell OptiPlex 7070 (`i5-9500` 3.0GHz, 8GB DDR4, 256GB SSD)](https://www.ebay.com/itm/168664126451) *(or [Listing B (`256gb SSD`)](https://www.ebay.com/itm/168664190631))* | **$145** *(or ~$120 via Best Offer)* | 6-core `i5-9500` with **Intel UHD 630 QuickSync** (3–4x 4K HDR streams at ~12W idle), 4x DDR4 slots, included 256GB SSD for Ubuntu + Docker, and internal SATA ports. |
+| **Base Server (`erebor`)** | **BYU Online Surplus** (Free Provo Pickup): [Dell OptiPlex 7070 (`i5-9500` 3.0GHz, 8GB DDR4, 256GB SSD)](https://www.ebay.com/itm/168664190631) *(or [Listing A](https://www.ebay.com/itm/168664126451))* | **$145** *(or ~$120 via Best Offer)* | 6-core `i5-9500` with **Intel UHD 630 QuickSync** (3–4x 4K HDR streams at ~12W idle), 4x DDR4 slots, included 256GB SSD for Ubuntu + Docker, and internal SATA ports. |
 | **Hard Drives (`mithril`)** | **1x or 2x 14TB** Seagate Exos X16/X18 or WD Ultrastar HC530 (Recertified, ServerPartDeals / GoHardDrive) | **$115** *(1 drive)* or **$220** *(2-drive ZFS Mirror)* | Start with 1 drive ($115) in the native 3.5" bay and run `zpool attach mithril <disk1> <disk2>` anytime later to convert into a redundant 2-drive ZFS Mirror with zero downtime. |
+| **External USB DVD Drive** | **LG Ultra Slim Portable DVD Writer (`GP65NB60`)** (or USB Blu-ray/DVD combo drive) | **$22** | Plugs into `erebor`'s front USB port for **100% automated DVD ripping** via `arm-ripper` (`rip.moria.lan`)—insert a disc and it rips, QuickSync-transcodes into `mithril/media/movies`, and auto-ejects. |
 | **RAM Upgrade *(Optional)* ** | 16GB (2x8GB) DDR4-2666/3200 Desktop UDIMM | **$0 today** *(+$25 later)* | The included 8GB DDR4 runs the full stack on day one; dropping 2x8GB into the empty slots bumps total RAM to **24GB** for larger ZFS ARC cache. |
-| **2nd Bay Adapter *(If SFF)* ** | SATA Power Y-Splitter + Optical-Bay 3.5" Mount | **$7** | Lets the slim SFF chassis power and mount the 2nd 3.5" HDD in the optical drive spot. |
-| **Total (Budget Build)** | | **~$260 (1-Drive) / ~$395 (Mirrored)** | **Saves ~$600–$735** vs. a custom build while running every single Moria service at full speed. |
+| **2nd Bay Adapter *(If SFF)* ** | SATA Power Y-Splitter + Optical-Bay 3.5" Mount | **$7** | Lets the slim SFF chassis power and mount the 2nd 3.5" HDD in the empty internal optical drive spot. |
+| **Total (Budget Build)** | | **~$282 (1-Drive) / ~$417 (Mirrored)** | **Saves ~$580–$715** vs. a custom build while running every single Moria service + auto DVD ripping at full speed. |
 
 ---
 

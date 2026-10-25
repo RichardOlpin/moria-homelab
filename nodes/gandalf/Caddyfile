@@ -88,3 +88,10 @@ docs.{$LOCAL_DOMAIN} {
 	import lan_only
 	reverse_proxy {$EREBOR_IP}:1221 # Papra Document & Receipt Vault
 }
+
+rip.{$LOCAL_DOMAIN} {
+	tls internal
+	import lan_only
+	reverse_proxy {$EREBOR_IP}:8088 # Automatic Ripping Machine (USB DVD Auto-Ripper)
+}
+
