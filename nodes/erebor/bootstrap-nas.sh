@@ -58,14 +58,29 @@ fi
 echo "==> [4/6] Tuning ZFS ARC Memory Cap (Max 16GB of 32GB RAM so Docker/AI has 16GB free)..."
 echo "options zfs zfs_arc_max=17179869184" > /etc/modprobe.d/zfs.conf
 
-echo "==> [5/6] Preparing fast NVMe directories for Docker & AI Workspaces..."
+echo "==> [5/7] Preparing fast NVMe directories for Docker & AI Workspaces..."
 mkdir -p /mnt/nvme/{appdata,workspaces,stacks}
 mkdir -p /mnt/nvme/appdata/{jellyfin,immich-pg,immich-cache,radarr,sonarr,prowlarr,bazarr,jellyseerr,code-server}
 if [[ -n "${SUDO_USER:-}" ]]; then
     chown -R "$SUDO_USER:$SUDO_USER" /mnt/nvme
 fi
 
-echo "==> [6/6] Printing ZFS 'mithril' Pool Creation Template..."
+echo "==> [6/7] Installing Sanoid ZFS snapshot policy, Samba Time Machine config & Nightly Backup Cron..."
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+mkdir -p /etc/sanoid
+cp "${SCRIPT_DIR}/configs/sanoid.conf" /etc/sanoid/sanoid.conf
+systemctl enable --now sanoid.timer || true
+
+cp "${SCRIPT_DIR}/configs/smb.conf" /etc/samba/smb.conf
+systemctl restart smbd || true
+
+install -m 0755 "${SCRIPT_DIR}/scripts/nightly-backup.sh" /usr/local/sbin/moria-nightly-backup
+cat << 'EOF' > /etc/cron.d/moria-backup
+# Run Moria Nightly Backup at 03:00 AM daily
+0 3 * * * root /usr/local/sbin/moria-nightly-backup >> /var/log/moria-backup.log 2>&1
+EOF
+
+echo "==> [7/7] Printing ZFS 'mithril' Pool Creation Template..."
 cat << 'EOF'
 ==============================================================================
  'erebor' Bootstrap Complete!

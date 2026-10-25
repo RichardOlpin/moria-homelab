@@ -17,6 +17,7 @@ jobs:
           bash -n nodes/gandalf/bootstrap-ubuntu.sh
           bash -n nodes/erebor/bootstrap-nas.sh
           bash -n nodes/erebor/scripts/optimize-for-tablet.sh
+          bash -n nodes/erebor/scripts/nightly-backup.sh
           bash -n autoinstall/make-cidata-usb.sh
           bash -n .githooks/pre-push
 
