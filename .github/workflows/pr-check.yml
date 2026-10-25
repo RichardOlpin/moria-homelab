@@ -18,6 +18,7 @@ jobs:
           bash -n nodes/erebor/bootstrap-nas.sh
           bash -n nodes/erebor/scripts/optimize-for-tablet.sh
           bash -n nodes/erebor/scripts/nightly-backup.sh
+          bash -n nodes/balrog/scripts/auto-sleep-watcher.sh
           bash -n autoinstall/make-cidata-usb.sh
           bash -n .githooks/pre-push
 
@@ -33,6 +34,12 @@ jobs:
 
       - name: Validate erebor Docker Compose syntax
         working-directory: nodes/erebor
+        run: |
+          cp .env.example .env
+          docker compose config -q
+
+      - name: Validate balrog Docker Compose syntax
+        working-directory: nodes/balrog
         run: |
           cp .env.example .env
           docker compose config -q

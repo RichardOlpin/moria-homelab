@@ -1,0 +1,74 @@
+name: balrog-gpu
+
+services:
+  # ============================================================================
+  # Immich Remote CUDA Machine Learning Worker (Nvidia RTX 5070)
+  # In Immich Admin UI on 'erebor', configure Machine Learning URLs as:
+  #   1. Primary:  http://balrog.moria.lan:3003 (RTX 5070 CUDA when awake)
+  #   2. Fallback: http://immich-machine-learning:3003 (Local CPU when asleep)
+  # ============================================================================
+  immich-ml-cuda:
+    image: ghcr.io/immich-app/immich-machine-learning:${IMMICH_VERSION:-release}-cuda
+    container_name: balrog-immich-ml
+    restart: unless-stopped
+    ports:
+      - "3003:3003"
+    volumes:
+      - balrog-ml-cache:/cache
+    environment:
+      - TZ=${TZ:-America/Denver}
+      - MACHINE_LEARNING_MODEL_TTL=300
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: 1
+              capabilities: [gpu]
+
+  # ============================================================================
+  # Ollama: Local LLM & Embedding Server on RTX 5070 (12GB VRAM)
+  # Powers Palantir's pgvector semantic movie search & local coding assistance
+  # ============================================================================
+  ollama:
+    image: ollama/ollama:latest
+    container_name: balrog-ollama
+    restart: unless-stopped
+    ports:
+      - "11434:11434"
+    volumes:
+      - balrog-ollama:/root/.ollama
+    environment:
+      - OLLAMA_HOST=0.0.0.0
+      - OLLAMA_KEEP_ALIVE=5m
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: 1
+              capabilities: [gpu]
+
+  # ============================================================================
+  # Faster-Whisper GPU ASR: Automatic Movie/TV Subtitle Generator for Bazarr
+  # ============================================================================
+  whisper-gpu:
+    image: onerahmet/openai-whisper-asr-webservice:latest-gpu
+    container_name: balrog-whisper
+    restart: unless-stopped
+    ports:
+      - "9000:9000"
+    environment:
+      - ASR_MODEL=${WHISPER_MODEL:-medium}
+      - ASR_ENGINE=faster_whisper
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: 1
+              capabilities: [gpu]
+
+volumes:
+  balrog-ml-cache:
+  balrog-ollama:
