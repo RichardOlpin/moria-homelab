@@ -353,6 +353,7 @@
           <div style="display:flex;gap:0.5rem;flex-wrap:wrap;">
             <button class="mode-btn active" id="subTabChat" onclick="switchCompanionSub('chat')">💬 Live Conversation</button>
             <button class="mode-btn" id="subTabArch" onclick="switchCompanionSub('arch')">📐 Hardware BOM &amp; Blueprint</button>
+            <button class="mode-btn" id="subTabLogs" onclick="switchCompanionSub('logs')">📡 Live Server Logs</button>
             <button class="btn-emerald" style="padding:0.45rem 0.9rem;" onclick="refreshCompanionData()">🔄 Refresh</button>
           </div>
         </div>
@@ -360,6 +361,7 @@
 
       <div id="chatFeedContainer" style="display:flex;flex-direction:column;gap:0.85rem;"></div>
       <pre id="archContainer" style="display:none;background:var(--panel);border:1px solid var(--border);border-radius:16px;padding:1.25rem;white-space:pre-wrap;word-wrap:break-word;font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:0.84rem;line-height:1.55;color:#e2e8f0;overflow-x:auto;"></pre>
+      <pre id="logsContainer" style="display:none;background:var(--panel);border:1px solid var(--border);border-radius:16px;padding:1.25rem;white-space:pre-wrap;word-wrap:break-word;font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:0.82rem;line-height:1.5;color:#6ee7b7;overflow-x:auto;"></pre>
     </section>
   </main>
 
@@ -396,8 +398,10 @@
     function switchCompanionSub(which) {
       document.getElementById('subTabChat').classList.toggle('active', which === 'chat');
       document.getElementById('subTabArch').classList.toggle('active', which === 'arch');
+      document.getElementById('subTabLogs').classList.toggle('active', which === 'logs');
       document.getElementById('chatFeedContainer').style.display = which === 'chat' ? 'flex' : 'none';
       document.getElementById('archContainer').style.display = which === 'arch' ? 'block' : 'none';
+      document.getElementById('logsContainer').style.display = which === 'logs' ? 'block' : 'none';
     }
 
     async function refreshCompanionData() {
@@ -406,6 +410,10 @@
       document.getElementById('tsUrls').innerHTML =
         `Tailscale URL: <code style="color:#6ee7b7">${escapeHtml(companionCache.tailscale_url)}</code> &bull; Home Wi-Fi URL: <code style="color:#bae6fd">${escapeHtml(companionCache.lan_url)}</code>`;
       document.getElementById('archContainer').textContent = companionCache.architecture_md || '';
+      document.getElementById('logsContainer').textContent =
+        (companionCache.recent_logs && companionCache.recent_logs.length)
+          ? companionCache.recent_logs.join('\n')
+          : 'No log entries recorded yet.';
 
       const feed = document.getElementById('chatFeedContainer');
       feed.innerHTML = (companionCache.messages || []).map(m => {
