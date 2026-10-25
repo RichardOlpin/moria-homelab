@@ -4,3 +4,8 @@
 *.pem
 *.key
 .DS_Store
+
+# Ignore local media files downloaded for Palantir testing
+apps/palantir/media/
+*.mp4
+*.mkv

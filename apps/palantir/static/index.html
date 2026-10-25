@@ -12,6 +12,7 @@
       --gold: #eab308;
       --cyan: #38bdf8;
       --emerald: #10b981;
+      --crimson: #f43f5e;
       --text: #f1f5f9;
       --muted: #94a3b8;
     }
@@ -29,9 +30,9 @@
       align-items: center;
       justify-content: space-between;
       gap: 1rem;
-      padding: 1.25rem 2rem;
+      padding: 1.1rem 2rem;
       border-bottom: 1px solid var(--border);
-      background: rgba(11, 14, 20, 0.85);
+      background: rgba(11, 14, 20, 0.88);
       backdrop-filter: blur(12px);
       position: sticky;
       top: 0;
@@ -64,15 +65,16 @@
       display: flex;
       gap: 0.5rem;
       flex-wrap: wrap;
+      align-items: center;
     }
     .mode-btn {
       background: var(--panel);
       color: var(--text);
       border: 1px solid var(--border);
-      padding: 0.55rem 1rem;
+      padding: 0.5rem 0.95rem;
       border-radius: 999px;
       cursor: pointer;
-      font-size: 0.85rem;
+      font-size: 0.83rem;
       font-weight: 600;
       transition: all 0.15s ease;
     }
@@ -80,6 +82,11 @@
       background: rgba(56, 189, 248, 0.15);
       border-color: var(--cyan);
       color: var(--cyan);
+    }
+    .mode-btn.balrog-btn {
+      border-color: rgba(244, 63, 94, 0.45);
+      color: #fda4af;
+      background: rgba(244, 63, 94, 0.12);
     }
     main {
       max-width: 1240px;
@@ -91,7 +98,7 @@
       border: 1px solid var(--border);
       border-radius: 16px;
       padding: 1.5rem;
-      margin-bottom: 2rem;
+      margin-bottom: 1.75rem;
       box-shadow: 0 12px 32px rgba(0, 0, 0, 0.35);
     }
     .search-row {
@@ -101,7 +108,7 @@
     }
     .search-input {
       flex: 1;
-      min-width: 260px;
+      min-width: 240px;
       background: #0b0e14;
       border: 1px solid var(--border);
       color: var(--text);
@@ -109,13 +116,13 @@
       border-radius: 10px;
       font-size: 0.95rem;
     }
-    .btn-primary, .btn-gold {
+    .btn-primary, .btn-gold, .btn-emerald {
       border: none;
-      padding: 0.85rem 1.25rem;
+      padding: 0.85rem 1.15rem;
       border-radius: 10px;
       font-weight: 600;
       cursor: pointer;
-      font-size: 0.9rem;
+      font-size: 0.86rem;
     }
     .btn-primary {
       background: var(--cyan);
@@ -125,6 +132,11 @@
       background: rgba(234, 179, 8, 0.16);
       color: var(--gold);
       border: 1px solid rgba(234, 179, 8, 0.4);
+    }
+    .btn-emerald {
+      background: rgba(16, 185, 129, 0.16);
+      color: #6ee7b7;
+      border: 1px solid rgba(16, 185, 129, 0.4);
     }
     .quick-chips {
       display: flex;
@@ -147,7 +159,7 @@
       color: var(--text);
     }
     .status-banner {
-      margin: 1rem 0 1.5rem;
+      margin: 0.5rem 0 1.25rem;
       font-size: 0.9rem;
       color: var(--cyan);
     }
@@ -180,7 +192,7 @@
     .badge {
       font-size: 0.7rem;
       font-weight: 700;
-      padding: 0.2rem 0.55rem;
+      padding: 0.22rem 0.55rem;
       border-radius: 6px;
       background: rgba(0, 0, 0, 0.65);
       color: #fff;
@@ -189,6 +201,11 @@
       background: rgba(16, 185, 129, 0.25);
       border: 1px solid var(--emerald);
       color: #6ee7b7;
+    }
+    .badge.live {
+      background: rgba(56, 189, 248, 0.28);
+      border: 1px solid var(--cyan);
+      color: #bae6fd;
     }
     .card-body {
       padding: 1.1rem;
@@ -217,6 +234,7 @@
       gap: 0.5rem;
     }
     .btn-stream, .btn-tablet {
+      display: block;
       width: 100%;
       padding: 0.65rem;
       border-radius: 8px;
@@ -228,7 +246,7 @@
       text-decoration: none;
     }
     .btn-stream {
-      background: rgba(56, 189, 248, 0.12);
+      background: rgba(56, 189, 248, 0.14);
       color: var(--cyan);
       border-color: rgba(56, 189, 248, 0.35);
     }
@@ -236,6 +254,52 @@
       background: rgba(16, 185, 129, 0.15);
       color: #6ee7b7;
       border-color: rgba(16, 185, 129, 0.4);
+    }
+    /* Cinema Video Player Modal */
+    .modal-backdrop {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(5, 7, 12, 0.92);
+      backdrop-filter: blur(10px);
+      z-index: 100;
+      align-items: center;
+      justify-content: center;
+      padding: 1.5rem;
+    }
+    .modal-backdrop.open {
+      display: flex;
+    }
+    .player-shell {
+      width: 100%;
+      max-width: 980px;
+      background: var(--panel);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      overflow: hidden;
+      box-shadow: 0 24px 64px rgba(0, 0, 0, 0.75);
+    }
+    .player-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 0.9rem 1.25rem;
+      border-bottom: 1px solid var(--border);
+    }
+    .player-close {
+      background: rgba(255, 255, 255, 0.08);
+      border: 1px solid var(--border);
+      color: var(--text);
+      padding: 0.4rem 0.85rem;
+      border-radius: 8px;
+      cursor: pointer;
+      font-weight: 600;
+    }
+    video {
+      width: 100%;
+      max-height: 75vh;
+      background: #000;
+      display: block;
     }
   </style>
 </head>
@@ -249,25 +313,27 @@
       </div>
     </div>
     <div class="nav-modes">
-      <button class="mode-btn active" onclick="loadLibrary('all', this)">All Library (4K / HDR)</button>
+      <button class="mode-btn active" onclick="loadLibrary('all', this)">All Library</button>
       <button class="mode-btn" onclick="loadLibrary('tablet', this)">🔥 Fire Tablet Offline Drawer</button>
       <button class="mode-btn" onclick="loadLibrary('kids', this)">🧒 Kids Safe Vault</button>
+      <button class="mode-btn balrog-btn" onclick="wakeBalrog()">⚡ Awaken Balrog (WoL)</button>
     </div>
   </header>
 
   <main>
     <section class="search-hero">
       <div class="search-row">
-        <input id="aiQuery" class="search-input" type="text" placeholder="Ask Palantír by mood or runtime (e.g. 'something funny under 100 minutes for a flight')..." onkeydown="if(event.key==='Enter') runAiSearch()" />
+        <input id="aiQuery" class="search-input" type="text" placeholder="Ask Palantír by mood, dragon, kids, or runtime (e.g. 'fantasy dragon quest' or 'kids rabbit comedy')..." onkeydown="if(event.key==='Enter') runAiSearch()" />
         <button class="btn-primary" onclick="runAiSearch()">AI Mood Search</button>
-        <button class="btn-gold" onclick="requestMissing()">+ Request Missing Title (Radarr/Sonarr)</button>
+        <button id="seedBtn" class="btn-emerald" onclick="seedFreeMovies()">⬇ Download 4 Free HD Movies</button>
+        <button class="btn-gold" onclick="requestMissing()">+ Request Missing (Radarr/Sonarr)</button>
       </div>
       <div class="quick-chips">
         <span style="font-size:0.78rem;color:var(--muted);">Try:</span>
+        <button class="chip" onclick="quickSearch('dragon fantasy quest')">🐉 Dragon Fantasy (Sintel)</button>
+        <button class="chip" onclick="quickSearch('kids rabbit family comedy')">🐰 Kids Safe Comedy (Big Buck Bunny)</button>
+        <button class="chip" onclick="quickSearch('cyberpunk robot sci-fi')">🤖 Cyberpunk Sci-Fi (Tears of Steel)</button>
         <button class="chip" onclick="quickSearch('under 100 minutes flight')">✈️ Under 100m for Flight</button>
-        <button class="chip" onclick="quickSearch('kids family tablet road trip')">🔥 Kids Fire Tablet Pack</button>
-        <button class="chip" onclick="quickSearch('epic fantasy Middle-earth')">🗡️ Epic Middle-earth Fantasy</button>
-        <button class="chip" onclick="quickSearch('rainy cyber-noir sci-fi')">🌧️ Rainy Cyber-Noir</button>
       </div>
     </section>
 
@@ -275,7 +341,40 @@
     <section id="mediaGrid" class="grid"></section>
   </main>
 
+  <!-- Built-in HTML5 Cinema Video Player Modal -->
+  <div id="playerModal" class="modal-backdrop" onclick="if(event.target===this) closePlayer()">
+    <div class="player-shell">
+      <div class="player-header">
+        <strong id="playerTitle">Now Playing</strong>
+        <button class="player-close" onclick="closePlayer()">✕ Close Player</button>
+      </div>
+      <video id="videoEl" controls playsinline></video>
+    </div>
+  </div>
+
   <script>
+    function openPlayer(itemId, title, isPlayable) {
+      if (!isPlayable) {
+        alert(`"${title}" is a catalog preview placeholder. Click a title with the "● Playable on Disk" badge (like Sintel, Big Buck Bunny, Tears of Steel, or Elephants Dream) to watch live video!`);
+        return;
+      }
+      const modal = document.getElementById('playerModal');
+      const video = document.getElementById('videoEl');
+      document.getElementById('playerTitle').textContent = `▶ ${title} — Direct Play Stream`;
+      video.src = `/api/stream/${itemId}`;
+      modal.classList.add('open');
+      video.play();
+    }
+
+    function closePlayer() {
+      const modal = document.getElementById('playerModal');
+      const video = document.getElementById('videoEl');
+      video.pause();
+      video.removeAttribute('src');
+      video.load();
+      modal.classList.remove('open');
+    }
+
     function renderItems(items, bannerText) {
       document.getElementById('statusBanner').textContent = bannerText || '';
       const grid = document.getElementById('mediaGrid');
@@ -284,6 +383,7 @@
           <div>
             <div class="poster" style="background: ${item.poster_gradient}">
               <div class="badges">
+                ${item.playable ? `<span class="badge live">● Playable on Disk</span>` : `<span class="badge">Catalog Preview</span>`}
                 ${item.resolutions.map(r => `<span class="badge ${r.includes('Tablet') ? 'tablet' : ''}">${r}</span>`).join('')}
               </div>
               <span class="badge" style="align-self:flex-start">${item.rating} &bull; ${item.runtime_min}m</span>
@@ -295,8 +395,14 @@
             </div>
           </div>
           <div class="actions">
-            <button class="btn-stream" onclick="alert('Launching Direct Play / QuickSync HLS Stream from erebor.moria.lan:8096 for: ${item.title}')">▶ Watch Stream (4K / Direct Play)</button>
-            ${item.tablet_ready ? `<button class="btn-tablet" onclick="alert('Starting direct Wi-Fi download of pre-optimized ${item.title} - Tablet 720p.mp4 (${item.tablet_size_mb} MB) to Fire Tablet SD card!')">⬇ Save to Fire Tablet (${item.tablet_size_mb} MB MP4)</button>` : ''}
+            <button class="btn-stream" onclick="openPlayer('${item.id}', '${item.title.replace(/'/g, "\\'")}', ${Boolean(item.playable)})">
+              ▶ ${item.playable ? 'Watch Live Stream (In-Browser)' : 'Watch Stream (Preview)'}
+            </button>
+            ${item.tablet_ready && item.playable
+              ? `<a class="btn-tablet" href="/api/download/${item.id}" download>⬇ Save to Fire Tablet (${item.tablet_size_mb} MB MP4)</a>`
+              : item.tablet_ready
+              ? `<button class="btn-tablet" onclick="alert('Preview item: once on disk, clicking here downloads the pre-optimized 720p MP4 directly to your Fire Tablet.')">⬇ Save to Fire Tablet (${item.tablet_size_mb} MB MP4)</button>`
+              : ''}
           </div>
         </article>
       `).join('');
@@ -309,12 +415,31 @@
       }
       const res = await fetch(`/api/library?mode=${mode}`);
       const data = await res.json();
+      const seedBtn = document.getElementById('seedBtn');
+      if (data.playable_count >= 4 && seedBtn) {
+        seedBtn.textContent = `✓ ${data.playable_count} Local Movies Ready`;
+      }
       const label = mode === 'tablet'
-        ? '🔥 Showing pre-optimized 720p H.264 MP4s ready for 15-second Amazon Fire Tablet download'
+        ? '🔥 Showing pre-optimized 720p H.264 MP4s ready for instant Amazon Fire Tablet download'
         : mode === 'kids'
         ? '🧒 Kids Safe Vault (/mnt/mithril/media/kids-*) — Parental Lock Active'
-        : `Connected to ${data.engine} (${data.items.length} titles)`;
+        : `Connected to ${data.engine} (${data.items.length} titles total)`;
       renderItems(data.items, label);
+    }
+
+    async function seedFreeMovies() {
+      const banner = document.getElementById('statusBanner');
+      banner.textContent = '⏳ Downloading 4 free HD Creative Commons movies (Sintel, Big Buck Bunny, Tears of Steel, Elephants Dream)...';
+      const res = await fetch('/api/seed-movies', { method: 'POST', headers: {'Content-Type': 'application/json'}, body: '{}' });
+      const data = await res.json();
+      await loadLibrary('all');
+      banner.textContent = `✅ ${data.message}`;
+    }
+
+    async function wakeBalrog() {
+      const res = await fetch('/api/wake-balrog', { method: 'POST', headers: {'Content-Type': 'application/json'}, body: '{}' });
+      const data = await res.json();
+      document.getElementById('statusBanner').textContent = `⚡ ${data.message}`;
     }
 
     async function runAiSearch() {

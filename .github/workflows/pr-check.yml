@@ -20,6 +20,7 @@ jobs:
           bash -n nodes/erebor/scripts/nightly-backup.sh
           bash -n nodes/balrog/scripts/auto-sleep-watcher.sh
           bash -n autoinstall/make-cidata-usb.sh
+          bash -n apps/palantir/seed-free-movies.sh
           bash -n .githooks/pre-push
 
       - name: Validate Ubuntu Autoinstall Cloud-Init YAML & Palantir Python Server
