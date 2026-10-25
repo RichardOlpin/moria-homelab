@@ -306,6 +306,71 @@ def score_item_for_query(item: dict, query: str) -> int:
     return score
 
 
+def get_homelab_companion_data() -> dict:
+    """Returns Tailscale/LAN URLs, docs/ARCHITECTURE.md, and live Antigravity chat messages."""
+    arch_file = BASE_DIR.parent.parent / "docs" / "ARCHITECTURE.md"
+    architecture_md = arch_file.read_text(encoding="utf-8") if arch_file.exists() else "# Architecture Blueprint not found"
+
+    # Detect Tailscale IP (100.x.y.z) and LAN IP (192.168.x.y) via ifconfig
+    tailscale_ip = "100.125.178.127"
+    lan_ip = "localhost"
+    try:
+        out = subprocess.run(["ifconfig"], capture_output=True, text=True, check=False).stdout
+        ts_match = re.search(r"inet (100\.\d+\.\d+\.\d+)", out)
+        lan_match = re.search(r"inet (192\.168\.\d+\.\d+|10\.\d+\.\d+\.\d+)", out)
+        if ts_match:
+            tailscale_ip = ts_match.group(1)
+        if lan_match:
+            lan_ip = lan_match.group(1)
+    except Exception:
+        pass
+
+    # Find the active Antigravity conversation transcript in ~/.gemini/antigravity/brain/
+    messages: list[dict] = []
+    brain_root = Path.home() / ".gemini" / "antigravity" / "brain"
+    if brain_root.exists():
+        transcripts = sorted(
+            brain_root.glob("*/.system_generated/logs/transcript.jsonl"),
+            key=lambda p: p.stat().st_mtime,
+            reverse=True,
+        )
+        if transcripts:
+            try:
+                for line in transcripts[0].read_text(encoding="utf-8", errors="replace").splitlines():
+                    if not line.strip():
+                        continue
+                    step = json.loads(line)
+                    step_type = step.get("type", "")
+                    content = (step.get("content") or "").strip()
+                    if not content:
+                        continue
+                    if step_type == "USER_INPUT":
+                        m = re.search(r"<USER_REQUEST>\s*(.*?)\s*</USER_REQUEST>", content, re.DOTALL)
+                        clean_text = m.group(1).strip() if m else content
+                        if "<SYSTEM_MESSAGE>" in clean_text and not m:
+                            continue
+                        messages.append({
+                            "role": "user",
+                            "time": step.get("created_at", ""),
+                            "text": clean_text,
+                        })
+                    elif step_type == "PLANNER_RESPONSE":
+                        messages.append({
+                            "role": "assistant",
+                            "time": step.get("created_at", ""),
+                            "text": content,
+                        })
+            except Exception:
+                pass
+
+    return {
+        "tailscale_url": f"http://{tailscale_ip}:{PORT}",
+        "lan_url": f"http://{lan_ip}:{PORT}",
+        "architecture_md": architecture_md,
+        "messages": messages[-40:],
+    }
+
+
 class PalantirHandler(SimpleHTTPRequestHandler):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, directory=str(STATIC_DIR), **kwargs)
@@ -374,6 +439,10 @@ class PalantirHandler(SimpleHTTPRequestHandler):
 
     def do_GET(self) -> None:
         parsed = urlparse(self.path)
+        if parsed.path == "/api/homelab-info":
+            self.send_json(get_homelab_companion_data())
+            return
+
         if parsed.path == "/api/library":
             params = parse_qs(parsed.query)
             mode = params.get("mode", ["all"])[0]
