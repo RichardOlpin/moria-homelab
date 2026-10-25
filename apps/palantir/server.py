@@ -34,6 +34,7 @@ BASE_DIR = Path(__file__).parent
 STATIC_DIR = BASE_DIR / "static"
 BIN_DIR = BASE_DIR / ".bin"
 LOG_FILE = BASE_DIR / "palantir.log"
+MOBILE_INBOX_FILE = BASE_DIR / "mobile_inbox.jsonl"
 MEDIA_DIR = Path(os.environ.get("PALANTIR_MEDIA_DIR", str(BASE_DIR / "media")))
 JELLYFIN_URL = os.environ.get("JELLYFIN_URL", "http://erebor.moria.lan:8096").rstrip("/")
 JELLYSEERR_URL = os.environ.get("JELLYSEERR_URL", "http://erebor.moria.lan:5055").rstrip("/")
@@ -381,6 +382,23 @@ def get_homelab_companion_data() -> dict:
             except Exception:
                 pass
 
+    if MOBILE_INBOX_FILE.exists():
+        try:
+            for line in MOBILE_INBOX_FILE.read_text(encoding="utf-8", errors="replace").splitlines():
+                if not line.strip():
+                    continue
+                entry = json.loads(line)
+                messages.append({
+                    "role": entry.get("role", "user"),
+                    "source": entry.get("source", "android"),
+                    "time": entry.get("time", ""),
+                    "text": entry.get("text", ""),
+                })
+        except Exception:
+            pass
+
+    messages.sort(key=lambda m: m.get("time", ""))
+
     recent_logs: list[str] = []
     if LOG_FILE.exists():
         try:
@@ -392,7 +410,7 @@ def get_homelab_companion_data() -> dict:
         "tailscale_url": f"http://{tailscale_ip}:{PORT}",
         "lan_url": f"http://{lan_ip}:{PORT}",
         "architecture_md": architecture_md,
-        "messages": messages[-40:],
+        "messages": messages[-50:],
         "recent_logs": recent_logs,
     }
 
@@ -590,6 +608,24 @@ class PalantirHandler(SimpleHTTPRequestHandler):
                 "status": "queued",
                 "message": f"Queued '{title}' in Radarr/Sonarr via Jellyseerr ({JELLYSEERR_URL}) + scheduled Fire Tablet 720p QSV encode.",
             })
+            return
+
+        if parsed.path == "/api/mobile-message":
+            text = body.get("text", "").strip()
+            if not text:
+                self.send_json({"error": "Message text is required"}, status=400)
+                return
+            client_ip = self.client_address[0] if self.client_address else "unknown"
+            entry = {
+                "role": "user",
+                "source": f"android ({client_ip})",
+                "time": datetime.datetime.now(datetime.timezone.utc).isoformat(),
+                "text": text,
+            }
+            with open(MOBILE_INBOX_FILE, "a", encoding="utf-8") as f:
+                f.write(json.dumps(entry) + "\n")
+            log_event(f"📲 MOBILE MESSAGE from {client_ip}: {text}")
+            self.send_json({"status": "ok", "entry": entry})
             return
 
         self.send_json({"error": "Not found"}, status=404)

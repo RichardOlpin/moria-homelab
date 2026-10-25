@@ -9,6 +9,7 @@
 apps/palantir/media/
 apps/palantir/.bin/
 apps/palantir/palantir.log
+apps/palantir/mobile_inbox.jsonl
 *.log
 *.mp4
 *.mkv

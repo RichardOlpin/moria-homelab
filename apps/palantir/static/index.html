@@ -350,13 +350,18 @@
             <strong style="color:var(--cyan);font-size:0.95rem;">📱 Tailscale Android Access Active</strong>
             <div id="tsUrls" style="font-size:0.83rem;color:var(--muted);margin-top:0.25rem;">Detecting Tailscale IP...</div>
           </div>
-          <div style="display:flex;gap:0.5rem;flex-wrap:wrap;">
+          <div style="display:flex;gap:0.5rem;flex-wrap:wrap;align-items:center;">
             <button class="mode-btn active" id="subTabChat" onclick="switchCompanionSub('chat')">💬 Live Conversation</button>
             <button class="mode-btn" id="subTabArch" onclick="switchCompanionSub('arch')">📐 Hardware BOM &amp; Blueprint</button>
             <button class="mode-btn" id="subTabLogs" onclick="switchCompanionSub('logs')">📡 Live Server Logs</button>
-            <button class="btn-emerald" style="padding:0.45rem 0.9rem;" onclick="refreshCompanionData()">🔄 Refresh</button>
+            <button class="btn-emerald" style="padding:0.45rem 0.9rem;" onclick="refreshCompanionData()">🔄 Refresh (Auto 5s)</button>
           </div>
         </div>
+      </div>
+
+      <div id="mobileChatComposer" style="background:var(--panel);border:1px solid var(--border);border-radius:14px;padding:0.85rem 1rem;margin-bottom:1rem;display:flex;gap:0.6rem;flex-wrap:wrap;">
+        <input id="mobileMsgInput" class="search-input" type="text" placeholder="Type a message or instruction from your phone..." onkeydown="if(event.key==='Enter') sendMobileMessage()" />
+        <button class="btn-primary" onclick="sendMobileMessage()">📲 Send to Moria</button>
       </div>
 
       <div id="chatFeedContainer" style="display:flex;flex-direction:column;gap:0.85rem;"></div>
@@ -399,9 +404,23 @@
       document.getElementById('subTabChat').classList.toggle('active', which === 'chat');
       document.getElementById('subTabArch').classList.toggle('active', which === 'arch');
       document.getElementById('subTabLogs').classList.toggle('active', which === 'logs');
+      document.getElementById('mobileChatComposer').style.display = which === 'chat' ? 'flex' : 'none';
       document.getElementById('chatFeedContainer').style.display = which === 'chat' ? 'flex' : 'none';
       document.getElementById('archContainer').style.display = which === 'arch' ? 'block' : 'none';
       document.getElementById('logsContainer').style.display = which === 'logs' ? 'block' : 'none';
+    }
+
+    async function sendMobileMessage() {
+      const input = document.getElementById('mobileMsgInput');
+      const text = (input.value || '').trim();
+      if (!text) return;
+      input.value = '';
+      await fetch('/api/mobile-message', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ text })
+      });
+      await refreshCompanionData();
     }
 
     async function refreshCompanionData() {
@@ -418,9 +437,10 @@
       const feed = document.getElementById('chatFeedContainer');
       feed.innerHTML = (companionCache.messages || []).map(m => {
         const isUser = m.role === 'user';
+        const isMobile = m.source && m.source.includes('android');
         const bg = isUser ? 'rgba(56, 189, 248, 0.12)' : '#131822';
         const border = isUser ? 'rgba(56, 189, 248, 0.4)' : '#232c3d';
-        const label = isUser ? '🧑 You' : '🤖 Antigravity';
+        const label = isUser ? (isMobile ? '📲 You (Phone)' : '🧑 You') : '🤖 Antigravity';
         return `
           <div style="background:${bg};border:1px solid ${border};border-radius:14px;padding:1rem 1.15rem;">
             <div style="display:flex;justify-content:space-between;font-size:0.76rem;color:var(--muted);margin-bottom:0.45rem;">
@@ -432,6 +452,13 @@
         `;
       }).join('');
     }
+
+    setInterval(() => {
+      const comp = document.getElementById('companionView');
+      if (comp && comp.style.display !== 'none') {
+        refreshCompanionData();
+      }
+    }, 5000);
 
     async function importVideoUrl() {
       const url = prompt("Paste a YouTube or direct video URL you own to import into Palantír:", "https://www.youtube.com/watch?v=tsVH9WHrkRE");
