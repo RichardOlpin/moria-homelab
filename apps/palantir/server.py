@@ -172,6 +172,22 @@ def ensure_yt_dlp() -> str:
     return str(local_bin)
 
 
+def trigger_jellyfin_refresh() -> None:
+    """Notifies local Jellyfin server on :8096 to refresh libraries."""
+    try:
+        req = urllib.request.Request(
+            "http://127.0.0.1:8096/Library/Refresh",
+            data=b"",
+            headers={
+                "Authorization": "MediaBrowser Client=\"Palantir\", Device=\"Strider\", DeviceId=\"strider-1\", Version=\"1.0.0\""
+            },
+            method="POST",
+        )
+        urllib.request.urlopen(req, timeout=2)
+    except Exception:
+        pass
+
+
 def import_video_url(url: str, custom_title: str = "", kids_safe: bool = False) -> dict:
     """Downloads a YouTube or direct video URL into MEDIA_DIR as MP4 + Fire Tablet hardlink."""
     yt_dlp = ensure_yt_dlp()
@@ -198,8 +214,10 @@ def import_video_url(url: str, custom_title: str = "", kids_safe: bool = False) 
     if not re.search(r"\(\d{4}\)", safe_title):
         safe_title = f"{safe_title} (2001)" if "lord of the rings" in safe_title.lower() else f"{safe_title} (2024)"
 
-    master_path = target_folder / f"{safe_title} - 1080p.mp4"
-    tablet_path = target_folder / f"{safe_title} - Tablet 720p.mp4"
+    movie_folder = target_folder / safe_title
+    movie_folder.mkdir(parents=True, exist_ok=True)
+    master_path = movie_folder / f"{safe_title} - 1080p.mp4"
+    tablet_path = movie_folder / f"{safe_title} - Tablet 720p.mp4"
 
     subprocess.run(
         [
@@ -220,6 +238,8 @@ def import_video_url(url: str, custom_title: str = "", kids_safe: bool = False) 
             os.link(master_path, tablet_path)
         except OSError:
             shutil.copy2(master_path, tablet_path)
+
+    trigger_jellyfin_refresh()
 
     return {
         "title": safe_title,
@@ -655,6 +675,7 @@ class PalantirHandler(SimpleHTTPRequestHandler):
             script = BASE_DIR / "seed-free-movies.sh"
             subprocess.run([str(script), str(MEDIA_DIR)], check=True)
             local_count = len(scan_local_media())
+            trigger_jellyfin_refresh()
             self.send_json({
                 "status": "ok",
                 "message": f"Downloaded {local_count} free HD Creative Commons movies into {MEDIA_DIR}!",
