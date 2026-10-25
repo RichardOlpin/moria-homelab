@@ -359,9 +359,15 @@
         </div>
       </div>
 
-      <div id="mobileChatComposer" style="background:var(--panel);border:1px solid var(--border);border-radius:14px;padding:0.85rem 1rem;margin-bottom:1rem;display:flex;gap:0.6rem;flex-wrap:wrap;">
-        <input id="mobileMsgInput" class="search-input" type="text" placeholder="Type a message or instruction from your phone..." onkeydown="if(event.key==='Enter') sendMobileMessage()" />
-        <button class="btn-primary" onclick="sendMobileMessage()">📲 Send to Moria</button>
+      <div id="convSelectorBar" style="display:flex;gap:0.5rem;flex-wrap:wrap;margin-bottom:0.85rem;align-items:center;"></div>
+
+      <div id="mobileChatComposer" style="background:var(--panel);border:1px solid var(--border);border-radius:14px;padding:0.85rem 1rem;margin-bottom:1rem;display:flex;flex-direction:column;gap:0.5rem;">
+        <div style="display:flex;gap:0.6rem;flex-wrap:wrap;">
+          <input id="mobileMsgInput" class="search-input" type="text" placeholder="Type a message or instruction from your phone..." onkeydown="if(event.key==='Enter') sendMobileMessage()" />
+          <button class="btn-primary" onclick="sendMobileMessage()">📲 Send to Moria</button>
+          <button class="mode-btn" id="sortOrderBtn" onclick="toggleChatSortOrder()">🔽 Newest at Top</button>
+        </div>
+        <div id="mobileSendStatus" style="font-size:0.8rem;color:#6ee7b7;display:none;"></div>
       </div>
 
       <div id="chatFeedContainer" style="display:flex;flex-direction:column;gap:0.85rem;"></div>
@@ -383,9 +389,22 @@
 
   <script>
     let companionCache = null;
+    let selectedConvId = 'all';
+    let newestFirst = true;
 
     function escapeHtml(str) {
       return (str || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+    }
+
+    function toggleChatSortOrder() {
+      newestFirst = !newestFirst;
+      document.getElementById('sortOrderBtn').textContent = newestFirst ? '🔽 Newest at Top' : '🔼 Oldest at Top';
+      renderCompanionChat();
+    }
+
+    function selectConversation(cid) {
+      selectedConvId = cid;
+      renderCompanionChat();
     }
 
     async function openCompanionTab(btnEl) {
@@ -404,6 +423,7 @@
       document.getElementById('subTabChat').classList.toggle('active', which === 'chat');
       document.getElementById('subTabArch').classList.toggle('active', which === 'arch');
       document.getElementById('subTabLogs').classList.toggle('active', which === 'logs');
+      document.getElementById('convSelectorBar').style.display = which === 'chat' ? 'flex' : 'none';
       document.getElementById('mobileChatComposer').style.display = which === 'chat' ? 'flex' : 'none';
       document.getElementById('chatFeedContainer').style.display = which === 'chat' ? 'flex' : 'none';
       document.getElementById('archContainer').style.display = which === 'arch' ? 'block' : 'none';
@@ -412,15 +432,71 @@
 
     async function sendMobileMessage() {
       const input = document.getElementById('mobileMsgInput');
+      const statusEl = document.getElementById('mobileSendStatus');
       const text = (input.value || '').trim();
       if (!text) return;
       input.value = '';
-      await fetch('/api/mobile-message', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ text })
-      });
-      await refreshCompanionData();
+      statusEl.style.display = 'block';
+      statusEl.style.color = 'var(--cyan)';
+      statusEl.textContent = '⏳ Sending message to Moria...';
+      try {
+        const res = await fetch('/api/mobile-message', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            text,
+            conversation_id: selectedConvId === 'all' ? '' : selectedConvId
+          })
+        });
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        statusEl.style.color = '#6ee7b7';
+        statusEl.textContent = `✅ Sent: "${text}"`;
+        await refreshCompanionData();
+      } catch (err) {
+        statusEl.style.color = '#fca5a5';
+        statusEl.textContent = `⚠️ Failed to send (${err.message}). Try refreshing.`;
+      }
+    }
+
+    function renderCompanionChat() {
+      if (!companionCache) return;
+      const convs = companionCache.conversations || [];
+      const bar = document.getElementById('convSelectorBar');
+      const pills = [
+        `<button class="mode-btn ${selectedConvId === 'all' ? 'active' : ''}" onclick="selectConversation('all')">🔀 All Project Chats (${(companionCache.messages || []).length})</button>`,
+        ...convs.map(c =>
+          `<button class="mode-btn ${selectedConvId === c.id ? 'active' : ''}" onclick="selectConversation('${escapeHtml(c.id)}')">${escapeHtml(c.title)} (${c.count})</button>`
+        )
+      ];
+      bar.innerHTML = `<span style="font-size:0.78rem;color:var(--muted);">Switch Chat:</span>` + pills.join('');
+
+      let activeMessages = companionCache.messages || [];
+      if (selectedConvId !== 'all') {
+        const found = convs.find(c => c.id === selectedConvId);
+        if (found) activeMessages = found.messages || [];
+      }
+
+      const ordered = newestFirst ? [...activeMessages].reverse() : [...activeMessages];
+      const feed = document.getElementById('chatFeedContainer');
+      feed.innerHTML = ordered.map(m => {
+        const isUser = m.role === 'user';
+        const isMobile = m.source && m.source.includes('android');
+        const bg = isUser ? 'rgba(56, 189, 248, 0.12)' : '#131822';
+        const border = isUser ? 'rgba(56, 189, 248, 0.4)' : '#232c3d';
+        const label = isUser ? (isMobile ? '📲 You (Phone)' : '🧑 You') : '🤖 Antigravity';
+        const chatTag = (selectedConvId === 'all' && m.chat_title)
+          ? `<span class="badge" style="margin-left:0.5rem;">${escapeHtml(m.chat_title)}</span>`
+          : '';
+        return `
+          <div style="background:${bg};border:1px solid ${border};border-radius:14px;padding:1rem 1.15rem;">
+            <div style="display:flex;justify-content:space-between;align-items:center;font-size:0.76rem;color:var(--muted);margin-bottom:0.45rem;">
+              <div><strong style="color:${isUser ? 'var(--cyan)' : '#6ee7b7'}">${label}</strong>${chatTag}</div>
+              <span>${escapeHtml(m.time ? new Date(m.time).toLocaleTimeString() : '')}</span>
+            </div>
+            <div style="white-space:pre-wrap;word-wrap:break-word;font-size:0.9rem;line-height:1.5;color:var(--text);">${escapeHtml(m.text)}</div>
+          </div>
+        `;
+      }).join('');
     }
 
     async function refreshCompanionData() {
@@ -433,24 +509,7 @@
         (companionCache.recent_logs && companionCache.recent_logs.length)
           ? companionCache.recent_logs.join('\n')
           : 'No log entries recorded yet.';
-
-      const feed = document.getElementById('chatFeedContainer');
-      feed.innerHTML = (companionCache.messages || []).map(m => {
-        const isUser = m.role === 'user';
-        const isMobile = m.source && m.source.includes('android');
-        const bg = isUser ? 'rgba(56, 189, 248, 0.12)' : '#131822';
-        const border = isUser ? 'rgba(56, 189, 248, 0.4)' : '#232c3d';
-        const label = isUser ? (isMobile ? '📲 You (Phone)' : '🧑 You') : '🤖 Antigravity';
-        return `
-          <div style="background:${bg};border:1px solid ${border};border-radius:14px;padding:1rem 1.15rem;">
-            <div style="display:flex;justify-content:space-between;font-size:0.76rem;color:var(--muted);margin-bottom:0.45rem;">
-              <strong style="color:${isUser ? 'var(--cyan)' : '#6ee7b7'}">${label}</strong>
-              <span>${escapeHtml(m.time ? new Date(m.time).toLocaleTimeString() : '')}</span>
-            </div>
-            <div style="white-space:pre-wrap;word-wrap:break-word;font-size:0.9rem;line-height:1.5;color:var(--text);">${escapeHtml(m.text)}</div>
-          </div>
-        `;
-      }).join('');
+      renderCompanionChat();
     }
 
     setInterval(() => {
