@@ -220,7 +220,26 @@ flowchart LR
    * Assemble the i3-12100 NAS (or flash Debian onto the 4-bay NAS), install the 1TB NVMe + 3x 14TB HDDs, and run a 24-hour `badblocks` / SMART burn-in test on the recertified drives before creating the `raidz1` pool.
    * Join `nas-core` to Komodo so you can deploy containers to it from your Git repo.
 3. **Phase 3: Cut the Subscriptions**
-   * Deploy **Immich** (import Google Photos/iCloud takeout), **Seafile/OCIS** (replace Google Drive), and **Jellyfin + `*arr` stack**.
-   * Point Immich's remote ML URL to `gpu-beast` (your RTX 5070 Gaming PC) for the initial photo library import.
+   * Deploy **Immich** (import Google Photos/iCloud takeout), **Papra** (`docs.moria.lan` document vault), **RomM** (`arcade.moria.lan` retro gaming + browser EmulatorJS), and **Jellyfin + `Palantír` + `*arr` stack**.
+   * Point Immich's remote ML URL to `balrog` (your RTX 5070 Gaming PC) for the initial photo library import.
 4. **Phase 4: Launch the AI Coding Sandbox & Custom Media App**
-   * Deploy your persistent AI dev container on `nas-core` with read-only access to `/mnt/tank/media` and `/dev/dri`, and start building your custom media frontend/backend.
+   * Deploy your persistent AI dev container on `erebor` with read-only access to `/mnt/mithril/media` and `/dev/dri`, and continue expanding **`Palantír`**.
+
+---
+
+## 8. Reference Inspirations & Future Expansion Backlog
+
+### Homelab Reference Videos
+* **Switch and Click**: [*12 Self-Hosted Apps to Finally Quit Big Tech*](https://www.youtube.com/watch?v=DlzkIjhJ18o) — Featured Jellyfin, Vaultwarden/Bitwarden, Immich, **Papra** (deployed on `erebor`), Audiobookshelf, Kavita, and Navidrome.
+* **Dammit Jeff**: [*I Spent a Year Replacing My Subscriptions. Here's How.*](https://www.youtube.com/watch?v=AtgCcMjtqF0) — Featured Immich, **RomM** retro gaming (deployed on `erebor`), media streaming, and external server access.
+* **Level1Techs (Wendell)**: [*Getting Started with Homelabing in 2026*](https://www.youtube.com/watch?v=x-OIIyPBOt4) — The "Software Zen Garden" philosophy: repurpose existing hardware (`gandalf` Lenovo Yoga 900) and pair with resilient ZFS storage (`mithril` on `erebor`).
+
+### Stored Backlog Ideas for Future PRs
+When you're ready to cut even more subscriptions later, these drop straight into `nodes/erebor/compose.yaml` with <100MB of total RAM overhead:
+
+| App | Subdomain | Subscription Replaced | Notes |
+| :--- | :--- | :--- | :--- |
+| **Audiobookshelf** | `audiobooks.moria.lan` | Audible ($15/mo) & Podcasts | Syncs audiobook & podcast progress across iOS, Android, and Amazon Fire Tablets. |
+| **Kavita** | `books.moria.lan` | Kindle Unlimited ($12/mo) & ComiXology | Fast `.epub`, `.pdf`, manga, and comic book server with a built-in web reader ideal for Fire Tablets. |
+| **Navidrome** | `music.moria.lan` | Spotify / Apple Music ($12–$17/mo) | Ultra-lightweight (~30MB RAM) Go music streamer compatible with Symfonium / Subsonic offline caching. |
+| **Home Assistant + Frigate** | `home.moria.lan` | Ring / Nest Cloud Cam Subscriptions | Local NVR object detection using `erebor`'s iGPU or `balrog` + Zigbee closet temp/humidity alerts. |

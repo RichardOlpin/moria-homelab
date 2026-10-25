@@ -76,3 +76,15 @@ code.{$LOCAL_DOMAIN} {
 	import lan_only
 	reverse_proxy {$EREBOR_IP}:8443 # AI Coding Workbench on erebor
 }
+
+arcade.{$LOCAL_DOMAIN} {
+	tls internal
+	import lan_only
+	reverse_proxy {$EREBOR_IP}:8098 # RomM Retro Game Library & Browser EmulatorJS
+}
+
+docs.{$LOCAL_DOMAIN} {
+	tls internal
+	import lan_only
+	reverse_proxy {$EREBOR_IP}:1221 # Papra Document & Receipt Vault
+}

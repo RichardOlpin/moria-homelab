@@ -60,7 +60,7 @@ echo "options zfs zfs_arc_max=17179869184" > /etc/modprobe.d/zfs.conf
 
 echo "==> [5/7] Preparing fast NVMe directories for Docker & AI Workspaces..."
 mkdir -p /mnt/nvme/{appdata,workspaces,stacks}
-mkdir -p /mnt/nvme/appdata/{jellyfin,immich-pg,immich-cache,radarr,sonarr,prowlarr,bazarr,jellyseerr,code-server}
+mkdir -p /mnt/nvme/appdata/{jellyfin,immich-pg,immich-cache,radarr,sonarr,prowlarr,bazarr,jellyseerr,code-server,romm/resources,romm/redis-data,romm-db}
 if [[ -n "${SUDO_USER:-}" ]]; then
     chown -R "$SUDO_USER:$SUDO_USER" /mnt/nvme
 fi
@@ -105,15 +105,18 @@ Then create your 28TB usable 'mithril' ZFS RAIDZ1 pool using:
     /dev/disk/by-id/ata-DRIVE_2 \
     /dev/disk/by-id/ata-DRIVE_3
 
-Create optimized datasets for Media, Photos, Cloud, and M1 MacBook Time Machine:
+Create optimized datasets for Media, Photos, Cloud, ROMs, and M1 MacBook Time Machine:
 
-  # 1M recordsize for large sequential video streaming (Palantir / Jellyfin)
+  # 1M recordsize for large sequential video streaming (Palantir / Jellyfin) & Retro ROMs (RomM)
   sudo zfs create -o recordsize=1M mithril/media
   sudo mkdir -p /mnt/mithril/media/{movies,tv,kids-movies,kids-tv,downloads}
+  sudo zfs create -o recordsize=1M mithril/roms
+  sudo mkdir -p /mnt/mithril/roms/{library,assets,config}
 
-  # 128K recordsize for Immich raw photo library & Nextcloud/Seafile
+  # 128K recordsize for Immich raw photo library & Papra Document Vault
   sudo zfs create -o recordsize=128K mithril/photos
   sudo zfs create -o recordsize=128K mithril/cloud
+  sudo mkdir -p /mnt/mithril/cloud/papra
 
   # Quota-capped 1.5TB dataset for M1 MacBook Pro ('strider') Time Machine backups
   sudo zfs create -o recordsize=1M -o compression=zstd -o quota=1500G mithril/timemachine
