@@ -51,8 +51,8 @@ if ! command -v docker &> /dev/null; then
 fi
 
 if [[ -n "${SUDO_USER:-}" ]]; then
-    usermod -aG docker,render,video "$SUDO_USER"
-    echo "    Added '$SUDO_USER' to docker, render, and video groups (for Intel QuickSync /dev/dri)."
+    usermod -aG docker,render,video,cdrom "$SUDO_USER"
+    echo "    Added '$SUDO_USER' to docker, render, video, and cdrom groups (for QuickSync /dev/dri & USB DVD /dev/sr0)."
 fi
 
 echo "==> [4/7] Tuning ZFS ARC Memory Cap (50% of total RAM so Docker/AI always has 50% free)..."
@@ -61,9 +61,10 @@ ARC_MAX_BYTES=$(( TOTAL_MEM_BYTES / 2 ))
 echo "options zfs zfs_arc_max=${ARC_MAX_BYTES}" > /etc/modprobe.d/zfs.conf
 echo "    Set zfs_arc_max=${ARC_MAX_BYTES} bytes (~$(( ARC_MAX_BYTES / 1024 / 1024 / 1024 ))GB)."
 
-echo "==> [5/7] Preparing fast NVMe directories for Docker & AI Workspaces..."
+echo "==> [5/7] Preparing fast NVMe directories for Docker, DVD Ripper & AI Workspaces..."
 mkdir -p /mnt/nvme/{appdata,workspaces,stacks}
-mkdir -p /mnt/nvme/appdata/{jellyfin,immich-pg,immich-cache,radarr,sonarr,prowlarr,bazarr,jellyseerr,code-server,romm/resources,romm/redis-data,romm-db}
+mkdir -p /mnt/nvme/appdata/{jellyfin,immich-pg,immich-cache,radarr,sonarr,prowlarr,bazarr,jellyseerr,code-server,romm/resources,romm/redis-data,romm-db,arm/config}
+cp "${BASH_SOURCE[0]%/*}/configs/arm.yaml" /mnt/nvme/appdata/arm/config/arm.yaml
 if [[ -n "${SUDO_USER:-}" ]]; then
     chown -R "$SUDO_USER:$SUDO_USER" /mnt/nvme
 fi

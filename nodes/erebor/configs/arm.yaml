@@ -1,0 +1,44 @@
+# ==============================================================================
+# Automatic Ripping Machine (ARM) Configuration for 'erebor' (rip.moria.lan)
+# Headless Insert-Disc -> Rip -> Intel QuickSync Transcode -> Jellyfin/Palantir
+# ==============================================================================
+
+ARM_NAME: "erebor-ripper"
+PREVENT_99: true
+
+# Automatically identify DVD/Blu-ray metadata via OMDb / TMDb and name folders
+# cleanly as "Movie Title (Year)/Movie Title (Year).mkv" for Jellyfin & Palantir
+VIDEOTYPE: "auto"
+MINLENGTH: "600"
+MAXLENGTH: "99999"
+MAINFEATURE: true
+
+# Rip with MakeMKV, transcode with Intel QuickSync (QSV), then delete raw temp files
+RIPMETHOD: "mkv"
+SKIP_TRANSCODE: false
+DELRAWFILES: true
+
+# HandBrake preset using Intel UHD 630 QuickSync hardware encoding (/dev/dri)
+HB_PRESET_DVD: "H.265 QSV 1080p"
+HB_PRESET_BD: "H.265 QSV 1080p"
+HB_ARGS_DVD: "--subtitle scan -F --subtitle-burned=none --native-language eng"
+HB_ARGS_BD: "--subtitle scan -F --subtitle-burned=none --native-language eng"
+DEST_EXT: "mp4"
+
+# Staging on fast NVMe SSD, final output directly into ZFS 'mithril/media/'
+RAW_PATH: "/home/arm/media/raw/"
+TRANSCODE_PATH: "/home/arm/media/transcode/"
+COMPLETED_PATH: "/home/arm/media/"
+
+# Automatically eject the USB DVD tray as soon as the movie is in your library
+AUTO_EJECT: true
+
+# Trigger a Jellyfin / Palantir library refresh upon completion
+EMBY_REFRESH: true
+EMBY_SERVER: "jellyfin"
+EMBY_PORT: "8096"
+
+# Web UI (https://rip.moria.lan -> port 8088 on erebor)
+WEBSERVER_IP: "0.0.0.0"
+WEBSERVER_PORT: 8080
+DISABLE_LOGIN: false

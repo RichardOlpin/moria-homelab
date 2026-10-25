@@ -215,3 +215,27 @@ services:
     ports:
       - "1221:1221"
 
+  # ============================================================================
+  # Automatic Ripping Machine (ARM): Headless USB DVD Ripper (rip.moria.lan)
+  # Insert a DVD -> Auto-rips, QuickSync transcodes, drops into mithril/media/movies
+  # & auto-ejects tray when ready for the next disc.
+  # ============================================================================
+  arm-ripper:
+    image: automaticrippingmachine/automatic-ripping-machine:latest
+    container_name: arm-ripper
+    restart: unless-stopped
+    privileged: true # Required to detect hot-plugged external USB DVD drive (/dev/sr0) & udev events
+    environment:
+      - ARM_UID=${PUID:-1000}
+      - ARM_GID=${PGID:-1000}
+      - TZ=${TZ:-America/Denver}
+    devices:
+      - /dev/dri:/dev/dri # Intel UHD 630 QuickSync hardware encoding in HandBrake
+    volumes:
+      - /mnt/nvme/appdata/arm:/home/arm
+      - /mnt/nvme/appdata/arm/config:/etc/arm/config
+      - /mnt/mithril/media:/home/arm/media # Outputs directly into /mnt/mithril/media/movies & tv
+    ports:
+      - "8088:8080"
+
+
