@@ -5,7 +5,8 @@
 *.key
 .DS_Store
 
-# Ignore local media files downloaded for Palantir testing
+# Ignore local media files and downloaded helper binaries for Palantir testing
 apps/palantir/media/
+apps/palantir/.bin/
 *.mp4
 *.mkv
