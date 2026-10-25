@@ -109,6 +109,15 @@ KNOWN_METADATA = {
         "vibe": "Beloved Rankin/Bass stop-motion holiday classic narrated by Burl Ives as Sam the Snowman",
         "poster_gradient": "linear-gradient(135deg, #b91c1c, #1e3a8a)",
     },
+    "jack frost": {
+        "title": "Jack Frost",
+        "year": 1979,
+        "runtime_min": 48,
+        "rating": "G",
+        "genres": ["Animation", "Holiday", "Family", "Classic"],
+        "vibe": "Charming Rankin/Bass stop-motion winter special featuring Robert Morse and Buddy Hackett as Pardon-Me-Pete",
+        "poster_gradient": "linear-gradient(135deg, #0284c7, #0f172a)",
+    },
 }
 
 DEMO_PREVIEW_ITEMS = [
@@ -669,6 +678,29 @@ class PalantirHandler(SimpleHTTPRequestHandler):
                 "explanation": f"Matched {len(clean_matches)} titles for vibe: '{query or 'All Titles'}'",
                 "items": clean_matches,
             })
+            return
+
+        if parsed.path == "/api/import-archive":
+            target = body.get("target", "").strip()
+            title = body.get("title", "").strip()
+            kids_safe = bool(body.get("kids_safe", False))
+            preset = body.get("preset", "").strip()
+            if not target and not preset:
+                self.send_json({"error": "Archive identifier, URL, or preset required"}, status=400)
+                return
+            try:
+                from import_archive_movie import import_archive_movie, PRESETS
+                if preset and preset in PRESETS:
+                    count = 0
+                    for p_id, p_kids, p_title in PRESETS[preset]:
+                        import_archive_movie(p_id, kids_safe=p_kids, custom_title=p_title)
+                        count += 1
+                    self.send_json({"status": "ok", "message": f"Imported preset '{preset}' ({count} movies) from Internet Archive!"})
+                    return
+                info = import_archive_movie(target, kids_safe=kids_safe, custom_title=title)
+                self.send_json({"status": "ok", "message": f"Imported '{info['title']}' ({info['size_mb']} MB) from Internet Archive!"})
+            except Exception as exc:
+                self.send_json({"error": f"Archive import failed: {exc}"}, status=500)
             return
 
         if parsed.path == "/api/import-url":
