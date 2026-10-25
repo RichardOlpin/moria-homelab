@@ -326,7 +326,8 @@
       <div class="search-row">
         <input id="aiQuery" class="search-input" type="text" placeholder="Ask Palantír by mood, dragon, kids, or runtime (e.g. 'fantasy dragon quest' or 'kids rabbit comedy')..." onkeydown="if(event.key==='Enter') runAiSearch()" />
         <button class="btn-primary" onclick="runAiSearch()">AI Mood Search</button>
-        <button class="btn-emerald" onclick="importVideoUrl()">📥 Import Video URL (YouTube)</button>
+        <button class="btn-emerald" onclick="importVideoUrl()">📥 Import YouTube URL</button>
+        <button class="btn-emerald" onclick="importArchiveMovie()">🏛️ Import from Internet Archive</button>
         <button id="seedBtn" class="btn-emerald" onclick="seedFreeMovies()">⬇ 4 Free HD Movies</button>
         <button class="btn-gold" onclick="requestMissing()">+ Request (Radarr/Sonarr)</button>
       </div>
@@ -539,6 +540,31 @@
       const data = await res.json();
       await loadLibrary('all');
       banner.textContent = data.error ? `⚠️ ${data.error}` : `✅ ${data.message}`;
+    }
+
+    async function importArchiveMovie() {
+      const input = prompt(
+        "Enter an Internet Archive URL or ID (e.g. JackFrost1979 or the-year-without-a-santa-claus-1974_202203)\nOR enter a preset: 'holiday', 'classics', or 'tolkien':",
+        "JackFrost1979"
+      );
+      if (!input) return;
+      const clean = input.trim();
+      const isPreset = ['holiday', 'classics', 'tolkien'].includes(clean.toLowerCase());
+      const banner = document.getElementById('statusBanner');
+      banner.textContent = `⏳ Importing from Internet Archive (${clean}) — downloading best MP4 & subtitles...`;
+      try {
+        const payload = isPreset ? { preset: clean.toLowerCase() } : { target: clean };
+        const res = await fetch('/api/import-archive', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload)
+        });
+        const data = await res.json();
+        await loadLibrary('all');
+        banner.textContent = data.error ? `⚠️ ${data.error}` : `✅ ${data.message}`;
+      } catch (err) {
+        banner.textContent = `❌ Archive import failed: ${err}`;
+      }
     }
 
     function openPlayer(itemId, title, isPlayable) {
