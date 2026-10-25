@@ -325,15 +325,16 @@
       <div class="search-row">
         <input id="aiQuery" class="search-input" type="text" placeholder="Ask Palantír by mood, dragon, kids, or runtime (e.g. 'fantasy dragon quest' or 'kids rabbit comedy')..." onkeydown="if(event.key==='Enter') runAiSearch()" />
         <button class="btn-primary" onclick="runAiSearch()">AI Mood Search</button>
-        <button id="seedBtn" class="btn-emerald" onclick="seedFreeMovies()">⬇ Download 4 Free HD Movies</button>
-        <button class="btn-gold" onclick="requestMissing()">+ Request Missing (Radarr/Sonarr)</button>
+        <button class="btn-emerald" onclick="importVideoUrl()">📥 Import Video URL (YouTube)</button>
+        <button id="seedBtn" class="btn-emerald" onclick="seedFreeMovies()">⬇ 4 Free HD Movies</button>
+        <button class="btn-gold" onclick="requestMissing()">+ Request (Radarr/Sonarr)</button>
       </div>
       <div class="quick-chips">
         <span style="font-size:0.78rem;color:var(--muted);">Try:</span>
+        <button class="chip" onclick="quickSearch('Middle-earth Fellowship fantasy')">💍 LOTR Fellowship</button>
         <button class="chip" onclick="quickSearch('dragon fantasy quest')">🐉 Dragon Fantasy (Sintel)</button>
         <button class="chip" onclick="quickSearch('kids rabbit family comedy')">🐰 Kids Safe Comedy (Big Buck Bunny)</button>
         <button class="chip" onclick="quickSearch('cyberpunk robot sci-fi')">🤖 Cyberpunk Sci-Fi (Tears of Steel)</button>
-        <button class="chip" onclick="quickSearch('under 100 minutes flight')">✈️ Under 100m for Flight</button>
       </div>
     </section>
 
@@ -353,6 +354,22 @@
   </div>
 
   <script>
+    async function importVideoUrl() {
+      const url = prompt("Paste a YouTube or direct video URL you own to import into Palantír:", "https://www.youtube.com/watch?v=tsVH9WHrkRE");
+      if (!url) return;
+      const title = prompt("Optional Title (leave blank to auto-detect from URL):", "The Lord of the Rings The Fellowship of the Ring (2001)") || "";
+      const banner = document.getElementById('statusBanner');
+      banner.textContent = `⏳ Importing "${title || url}" via yt-dlp into local MP4 library...`;
+      const res = await fetch('/api/import-url', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ url, title, kids_safe: false })
+      });
+      const data = await res.json();
+      await loadLibrary('all');
+      banner.textContent = data.error ? `⚠️ ${data.error}` : `✅ ${data.message}`;
+    }
+
     function openPlayer(itemId, title, isPlayable) {
       if (!isPlayable) {
         alert(`"${title}" is a catalog preview placeholder. Click a title with the "● Playable on Disk" badge (like Sintel, Big Buck Bunny, Tears of Steel, or Elephants Dream) to watch live video!`);
