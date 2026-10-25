@@ -31,6 +31,7 @@ from urllib.parse import urlparse, parse_qs
 
 PORT = int(os.environ.get("PALANTIR_PORT", "8080"))
 BASE_DIR = Path(__file__).parent
+INITIAL_CODE_BYTES = Path(__file__).resolve().read_bytes()
 STATIC_DIR = BASE_DIR / "static"
 BIN_DIR = BASE_DIR / ".bin"
 LOG_FILE = BASE_DIR / "palantir.log"
@@ -344,8 +345,25 @@ def get_homelab_companion_data() -> dict:
     except Exception:
         pass
 
-    # Find the active Antigravity conversation transcript in ~/.gemini/antigravity/brain/
-    messages: list[dict] = []
+    mobile_msgs: list[dict] = []
+    if MOBILE_INBOX_FILE.exists():
+        try:
+            for line in MOBILE_INBOX_FILE.read_text(encoding="utf-8", errors="replace").splitlines():
+                if not line.strip():
+                    continue
+                entry = json.loads(line)
+                mobile_msgs.append({
+                    "role": entry.get("role", "user"),
+                    "source": entry.get("source", "android"),
+                    "conversation_id": entry.get("conversation_id", ""),
+                    "time": entry.get("time", ""),
+                    "text": entry.get("text", ""),
+                })
+        except Exception:
+            pass
+
+    conversations: list[dict] = []
+    all_messages: list[dict] = []
     brain_root = Path.home() / ".gemini" / "antigravity" / "brain"
     if brain_root.exists():
         transcripts = sorted(
@@ -353,9 +371,12 @@ def get_homelab_companion_data() -> dict:
             key=lambda p: p.stat().st_mtime,
             reverse=True,
         )
-        if transcripts:
+        for t_path in transcripts:
+            cid = t_path.parent.parent.parent.name
+            conv_msgs: list[dict] = []
+            first_user_prompt = ""
             try:
-                for line in transcripts[0].read_text(encoding="utf-8", errors="replace").splitlines():
+                for line in t_path.read_text(encoding="utf-8", errors="replace").splitlines():
                     if not line.strip():
                         continue
                     step = json.loads(line)
@@ -368,36 +389,55 @@ def get_homelab_companion_data() -> dict:
                         clean_text = m.group(1).strip() if m else content
                         if "<SYSTEM_MESSAGE>" in clean_text and not m:
                             continue
-                        messages.append({
+                        if not first_user_prompt:
+                            first_user_prompt = clean_text
+                        conv_msgs.append({
                             "role": "user",
+                            "conversation_id": cid,
                             "time": step.get("created_at", ""),
                             "text": clean_text,
                         })
                     elif step_type == "PLANNER_RESPONSE":
-                        messages.append({
+                        conv_msgs.append({
                             "role": "assistant",
+                            "conversation_id": cid,
                             "time": step.get("created_at", ""),
                             "text": content,
                         })
             except Exception:
-                pass
+                continue
 
-    if MOBILE_INBOX_FILE.exists():
-        try:
-            for line in MOBILE_INBOX_FILE.read_text(encoding="utf-8", errors="replace").splitlines():
-                if not line.strip():
-                    continue
-                entry = json.loads(line)
-                messages.append({
-                    "role": entry.get("role", "user"),
-                    "source": entry.get("source", "android"),
-                    "time": entry.get("time", ""),
-                    "text": entry.get("text", ""),
-                })
-        except Exception:
-            pass
+            if not conv_msgs or "TruePrice" in first_user_prompt:
+                continue
 
-    messages.sort(key=lambda m: m.get("time", ""))
+            lower_first = first_user_prompt.lower()
+            if "hardware" in lower_first or "surplus" in lower_first:
+                title = "🛒 Chat 2: Hardware & BYU Surplus"
+            elif "ssh key" in lower_first:
+                title = "🔑 Chat 3: GitHub SSH Setup"
+            elif "plan out" in lower_first or "jellyfin" in lower_first or cid.startswith("d9f7471c"):
+                title = "💬 Chat 1: Moria Homelab & Palantír"
+            else:
+                short = re.sub(r"\s+", " ", first_user_prompt)[:34].strip()
+                title = f"💬 {short}..."
+
+            for mm in mobile_msgs:
+                target_cid = mm.get("conversation_id", "")
+                if target_cid == cid or (not target_cid and len(conversations) == 0):
+                    conv_msgs.append({**mm, "chat_title": title})
+
+            conv_msgs.sort(key=lambda x: x.get("time", ""))
+            for cm in conv_msgs:
+                all_messages.append({**cm, "chat_title": title})
+
+            conversations.append({
+                "id": cid,
+                "title": title,
+                "count": len(conv_msgs),
+                "messages": conv_msgs[-50:],
+            })
+
+    all_messages.sort(key=lambda m: m.get("time", ""))
 
     recent_logs: list[str] = []
     if LOG_FILE.exists():
@@ -410,7 +450,8 @@ def get_homelab_companion_data() -> dict:
         "tailscale_url": f"http://{tailscale_ip}:{PORT}",
         "lan_url": f"http://{lan_ip}:{PORT}",
         "architecture_md": architecture_md,
-        "messages": messages[-50:],
+        "conversations": conversations,
+        "messages": all_messages[-60:],
         "recent_logs": recent_logs,
     }
 
@@ -612,6 +653,7 @@ class PalantirHandler(SimpleHTTPRequestHandler):
 
         if parsed.path == "/api/mobile-message":
             text = body.get("text", "").strip()
+            conv_id = body.get("conversation_id", "").strip()
             if not text:
                 self.send_json({"error": "Message text is required"}, status=400)
                 return
@@ -619,12 +661,13 @@ class PalantirHandler(SimpleHTTPRequestHandler):
             entry = {
                 "role": "user",
                 "source": f"android ({client_ip})",
+                "conversation_id": conv_id,
                 "time": datetime.datetime.now(datetime.timezone.utc).isoformat(),
                 "text": text,
             }
             with open(MOBILE_INBOX_FILE, "a", encoding="utf-8") as f:
                 f.write(json.dumps(entry) + "\n")
-            log_event(f"📲 MOBILE MESSAGE from {client_ip}: {text}")
+            log_event(f"📲 MOBILE MESSAGE [chat={conv_id or 'active'}] from {client_ip}: {text}")
             self.send_json({"status": "ok", "entry": entry})
             return
 
@@ -632,22 +675,22 @@ class PalantirHandler(SimpleHTTPRequestHandler):
 
 
 def start_auto_reloader(server: ThreadingHTTPServer) -> None:
-    """Watches apps/palantir/server.py and hot-reloads the server when modified."""
+    """Watches apps/palantir/server.py content bytes and hot-reloads when modified."""
     script_path = Path(__file__).resolve()
-    try:
-        initial_mtime = script_path.stat().st_mtime
-    except OSError:
-        return
 
     def watcher() -> None:
         while True:
             time.sleep(1.5)
             try:
-                current_mtime = script_path.stat().st_mtime
+                current_bytes = script_path.read_bytes()
             except OSError:
                 continue
-            if current_mtime != initial_mtime:
+            if current_bytes != INITIAL_CODE_BYTES:
+                # Wait briefly for git checkout / merge operations to settle
+                time.sleep(1.0)
                 try:
+                    if script_path.read_bytes() == INITIAL_CODE_BYTES:
+                        continue
                     py_compile.compile(str(script_path), doraise=True)
                 except Exception as exc:
                     log_event(f"⚠️ Skipping hot-reload due to syntax error in server.py: {exc}")
