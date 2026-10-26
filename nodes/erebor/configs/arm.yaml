@@ -1,44 +1,67 @@
 # ==============================================================================
-# Automatic Ripping Machine (ARM) Configuration for 'erebor' (rip.moria.lan)
-# Headless Insert-Disc -> Rip -> Intel QuickSync Transcode -> Jellyfin/Palantir
+# Automatic Ripping Machine (ARM) Configuration — Moria Homelab ('erebor')
+#
+# Insert a commercial DVD, Blu-ray, or Audio CD into the external USB drive:
+#   1. ARM identifies the disc metadata via OMDB / TheMovieDB / MusicBrainz.
+#   2. MakeMKV extracts the main feature title.
+#   3. HandBrake hardware-transcodes using Intel QuickSync (UHD 630 / UHD 730).
+#   4. Output is saved to /mnt/mithril/media/movies/<Title (Year)>/<Title (Year)> - 1080p.mp4
+#   5. ARM triggers an authenticated Jellyfin library rescan and auto-ejects the tray!
 # ==============================================================================
 
+# General Settings
 ARM_NAME: "erebor-ripper"
-PREVENT_99: true
+ARM_CHILDREN: 1
+AUTO_EJECT: true
+RAMDISK: false
 
-# Automatically identify DVD/Blu-ray metadata via OMDb / TMDb and name folders
-# cleanly as "Movie Title (Year)/Movie Title (Year).mkv" for Jellyfin & Palantir
+# Paths inside Docker container
+ARMPATH: "/home/arm/media"
+RAWPATH: "/home/arm/media/raw-rips"
+LOGPATH: "/home/arm/logs"
+CONFIGPATH: "/etc/arm/config"
+
+# Media Folder Output Layout (Directly matches Moria / Jellyfin / Palantir standard)
+COMPLETED_PATH: "/home/arm/media/movies"
+COMPLETED_TV_PATH: "/home/arm/media/tv"
+COMPLETED_MUSIC_PATH: "/home/arm/media/music"
+
+# Permissions
+CHMOD_VALUE: "775"
+SET_MEDIA_PERMISSIONS: true
+
+# Disc Identification & Metadata Scraping
+GET_VIDEO_TITLE: true
 VIDEOTYPE: "auto"
-MINLENGTH: "600"
-MAXLENGTH: "99999"
-MAINFEATURE: true
+MINLENGTH: 1200 # Ignore extras and trailers under 20 minutes (1200 seconds)
+MAXLENGTH: 28800 # 8 hours max
 
-# Rip with MakeMKV, transcode with Intel QuickSync (QSV), then delete raw temp files
+# APIs for automated poster art and metadata tagging (add free keys in .env)
+OMDB_API_KEY: ""
+TMDB_API_KEY: ""
+
+# Ripping Engine (MakeMKV rips raw stream first for 100% disc read accuracy)
 RIPMETHOD: "mkv"
-SKIP_TRANSCODE: false
-DELRAWFILES: true
+MAINFEATURE: true # Rip only the main movie feature to save disk space and time
 
-# HandBrake preset using Intel UHD 630 QuickSync hardware encoding (/dev/dri)
-HB_PRESET_DVD: "H.265 QSV 1080p"
-HB_PRESET_BD: "H.265 QSV 1080p"
-HB_ARGS_DVD: "--subtitle scan -F --subtitle-burned=none --native-language eng"
-HB_ARGS_BD: "--subtitle scan -F --subtitle-burned=none --native-language eng"
+# Transcoder: HandBrake with Intel QuickSync Hardware Acceleration (/dev/dri)
+TRANSCODER: "HandBrake"
+SKIP_TRANSCODE: false
 DEST_EXT: "mp4"
 
-# Staging on fast NVMe SSD, final output directly into ZFS 'mithril/media/'
-RAW_PATH: "/home/arm/media/raw/"
-TRANSCODE_PATH: "/home/arm/media/transcode/"
-COMPLETED_PATH: "/home/arm/media/"
+# Intel QuickSync HandBrake Arguments (UHD 630 / UHD 730 hardware encoding)
+# Transcodes a full 2-hour DVD in ~4 to 7 minutes using ~12W of power!
+HB_PRESET_DVD: "HQ 1080p30 Surround"
+HB_ARGS_DVD: "--encoder qsv_h264 --encoder-preset balanced --all-subtitles --all-audio"
 
-# Automatically eject the USB DVD tray as soon as the movie is in your library
-AUTO_EJECT: true
+HB_PRESET_BD: "HQ 1080p30 Surround"
+HB_ARGS_BD: "--encoder qsv_h264 --encoder-preset balanced --all-subtitles --all-audio"
 
-# Trigger a Jellyfin / Palantir library refresh upon completion
-EMBY_REFRESH: true
-EMBY_SERVER: "jellyfin"
-EMBY_PORT: "8096"
+# Audio CD ripping (uses ABCDE for FLAC extraction with MusicBrainz tagging)
+RIPMETHOD_AUDIO: "abcde"
+AUDIO_FORMAT: "flac"
 
-# Web UI (https://rip.moria.lan -> port 8088 on erebor)
-WEBSERVER_IP: "0.0.0.0"
-WEBSERVER_PORT: 8080
-DISABLE_LOGIN: false
+# Notifications & Webhook Auto-Refresh for Moria Jellyfin & Palantir
+NOTIFY_RIP: true
+NOTIFY_TRANSCODE: true
+WEBHOOK_URL: "http://erebor.moria.lan:8096/Library/Refresh"

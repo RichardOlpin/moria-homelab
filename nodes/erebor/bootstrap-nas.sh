@@ -84,6 +84,11 @@ cat << 'EOF' > /etc/cron.d/moria-backup
 0 3 * * * root /usr/local/sbin/moria-nightly-backup >> /var/log/moria-backup.log 2>&1
 EOF
 
+echo "==> Configuring Automatic Ripping Machine (ARM) host udev & permissions..."
+if [[ -f "${SCRIPT_DIR}/scripts/setup-arm.sh" ]]; then
+    bash "${SCRIPT_DIR}/scripts/setup-arm.sh"
+fi
+
 echo "==> [7/7] Printing ZFS 'mithril' Pool Creation Template..."
 cat << 'EOF'
 ==============================================================================
