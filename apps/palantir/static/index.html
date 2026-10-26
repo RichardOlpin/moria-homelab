@@ -353,7 +353,8 @@
       <button class="mode-btn" onclick="loadLibrary('kids', this)">🧒 Kids Safe Vault</button>
       <button class="mode-btn" onclick="openCompanionTab(this)">📱 Blueprint &amp; Live Chat</button>
       <button class="mode-btn balrog-btn" onclick="wakeBalrog()">⚡ Awaken Balrog (WoL)</button>
-      <span id="balrogPill" class="balrog-pill" onclick="wakeBalrog()" title="Click to awaken Balrog or test in Demo mode">💤 Balrog: Sleeping</span>
+      <button class="mode-btn" style="border-color:rgba(148,163,184,0.3);color:#cbd5e1;" onclick="sleepBalrog()">💤 Sleep Balrog</button>
+      <span id="balrogPill" class="balrog-pill" onclick="handleBalrogPillClick()" title="Click to awaken or put Balrog to sleep">💤 Balrog: Sleeping</span>
     </div>
   </header>
 
@@ -769,6 +770,40 @@
 
       } catch (err) {
         banner.textContent = `❌ Wake-on-LAN error: ${err}`;
+      }
+    }
+
+    async function handleBalrogPillClick() {
+      const pill = document.getElementById('balrogPill');
+      if (pill && pill.className.includes('awake')) {
+        if (confirm("Balrog is currently AWAKE. Would you like to put it to sleep (S3 ~2W)?")) {
+          await sleepBalrog();
+        }
+      } else {
+        await wakeBalrog();
+      }
+    }
+
+    async function sleepBalrog() {
+      const banner = document.getElementById('statusBanner');
+      const pill = document.getElementById('balrogPill');
+      banner.textContent = '💤 Sending remote sleep command to Balrog (port 9090)...';
+      try {
+        const res = await fetch('/api/balrog-sleep', {
+          method: 'POST',
+          headers: {'Content-Type': 'application/json'},
+          body: JSON.stringify({})
+        });
+        const data = await res.json();
+        if (pill) {
+          pill.className = 'balrog-pill';
+          pill.innerHTML = `💤 Balrog: Sleeping`;
+        }
+        banner.textContent = data.status === 'sent' || data.status === 'success'
+          ? '💤 Remote sleep command sent! Balrog is returning to S3 sleep (~2W).'
+          : `⚠️ Sleep response: ${JSON.stringify(data)}`;
+      } catch (err) {
+        banner.textContent = `❌ Failed to send sleep command: ${err.message}`;
       }
     }
 

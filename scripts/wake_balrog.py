@@ -79,7 +79,23 @@ def main() -> int:
     parser.add_argument("--poll", action=argparse.BooleanOptionalAction, default=True, help="Poll until online")
     parser.add_argument("--timeout", type=int, default=30, help="Max seconds to wait for boot (default: 30)")
     parser.add_argument("--simulate", action="store_true", help="Run simulated wake demo without real wait")
+    parser.add_argument("--sleep", action="store_true", help="Send remote sleep signal to balrog webhook (port 9090)")
     args = parser.parse_args()
+
+    if args.sleep:
+        webhook_port = int(os.environ.get("SLEEP_WEBHOOK_PORT", "9090"))
+        print(f"💤 Sending remote sleep command to balrog (http://{args.host}:{webhook_port}/sleep)...")
+        import urllib.request, json
+        try:
+            req = urllib.request.Request(f"http://{args.host}:{webhook_port}/sleep", data=b"", method="POST")
+            with urllib.request.urlopen(req, timeout=3.0) as resp:
+                data = json.loads(resp.read().decode("utf-8"))
+                print(f"✓ Balrog acknowledged sleep signal: {data}")
+                return 0
+        except Exception as exc:
+            print(f"⚠️ Could not reach sleep webhook on {args.host}:{webhook_port} -> {exc}", file=sys.stderr)
+            print("   Make sure 'install-sleep-service.bat' has been run on balrog to start the listener.")
+            return 1
 
     clean_mac = re.sub(r"[^0-9a-fA-F]", "", args.mac)
     formatted_mac = ":".join(clean_mac[i:i+2].upper() for i in range(0, 12, 2)) if len(clean_mac) == 12 else args.mac
