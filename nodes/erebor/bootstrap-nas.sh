@@ -92,7 +92,7 @@ cat << 'EOF'
 Verify your installed hard drive IDs with:
   ls -l /dev/disk/by-id/ | grep -v part
 
-OPTION A1 — Top Budget Start (Dell OptiPlex 7070 w/ 1x 14TB Drive, expandable to Mirror later):
+OPTION A1 — Single-Drive Start (1x 10TB Enterprise SATA Drive, expandable to Mirror later):
   sudo zpool create -f \
     -o ashift=12 -o autotrim=on \
     -O acltype=posixacl -O xattr=sa -O dnodesize=auto \
@@ -102,7 +102,7 @@ OPTION A1 — Top Budget Start (Dell OptiPlex 7070 w/ 1x 14TB Drive, expandable 
   # Later, convert live to a redundant 2-drive ZFS Mirror without losing data:
   # sudo zpool attach mithril /dev/disk/by-id/ata-DRIVE_1 /dev/disk/by-id/ata-DRIVE_2
 
-OPTION A2 — Top Budget Redundant Start (Dell OptiPlex 7070 w/ 2x 14TB ZFS Mirror = 14TB usable):
+OPTION A2 — Recommended Redundant Start (2x 10TB Enterprise ZFS Mirror = ~9.1 TiB usable):
   sudo zpool create -f \
     -o ashift=12 -o autotrim=on \
     -O acltype=posixacl -O xattr=sa -O dnodesize=auto \
@@ -111,7 +111,7 @@ OPTION A2 — Top Budget Redundant Start (Dell OptiPlex 7070 w/ 2x 14TB ZFS Mirr
     /dev/disk/by-id/ata-DRIVE_1 \
     /dev/disk/by-id/ata-DRIVE_2
 
-OPTION B — Custom mATX 3-Drive Build (3x 14TB ZFS RAIDZ1 = 28TB usable):
+OPTION B — 3-Drive Build (3x 10TB ZFS RAIDZ1 = ~18.2 TiB usable):
   sudo zpool create -f \
     -o ashift=12 -o autotrim=on \
     -O acltype=posixacl -O xattr=sa -O dnodesize=auto \
