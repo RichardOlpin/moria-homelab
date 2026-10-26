@@ -147,7 +147,7 @@ def check_balrog_status(host: str | None = None, port: int | None = None, timeou
             "simulated_remaining_sec": remaining_sim,
             "host": target_host,
             "mac": BALROG_STATE.get("last_mac", BALROG_MAC),
-            "gpu": "AMD Ryzen 7 9800X3D + Nvidia GeForce RTX 5070 (12GB GDDR7)",
+            "gpu": "AMD Ryzen 7 7800X3D + Nvidia GeForce RTX 5070 (12GB GDDR7)",
             "services": {
                 "ollama": True,
                 "immich_ml": True,
@@ -174,7 +174,7 @@ def check_balrog_status(host: str | None = None, port: int | None = None, timeou
         "simulated": False,
         "host": target_host,
         "mac": BALROG_STATE.get("last_mac", BALROG_MAC),
-        "gpu": "AMD Ryzen 7 9800X3D + Nvidia GeForce RTX 5070 (12GB GDDR7)",
+        "gpu": "AMD Ryzen 7 7800X3D + Nvidia GeForce RTX 5070 (12GB GDDR7)",
         "services": {
             "ollama": is_online,
             "immich_ml": is_online,

@@ -33,7 +33,7 @@ flowchart TB
     subgraph Office["Office & Mobile Workstations"]
         subgraph Gaming["Node 3: balrog (Gaming PC - On-Demand via WoL)"]
             direction TB
-            GSpecs["AMD 9800X3D | Nvidia RTX 5070 (12GB VRAM) | 1TB SSD"]
+            GSpecs["AMD 7800X3D | Nvidia RTX 5070 (12GB VRAM) | 1TB SSD"]
             GApps["• Immich Remote ML Worker (CLIP / Facial Rec)<br/>• Fast CUDA Inference (Whisper Subtitles & pgvector)<br/>• Tdarr Node (AV1 Batch Encoding)"]
         end
 
@@ -54,7 +54,7 @@ flowchart TB
 ### Why This 4-Node Split Works So Well
 1. **`gandalf` (Lenovo Yoga 900) — Zero Single Point of Failure**: Because the Yoga 900 has an internal battery (capped at 60% via Ubuntu's `ideapad_acpi` driver), putting **DNS (AdGuard Home), Reverse Proxy (Caddy), Passwords (Vaultwarden), and Git (Forgejo)** on it means you can reboot `erebor` or survive a brief power outage without taking down household internet.
 2. **`erebor` (Custom i3-12100 NAS) — 28TB `mithril` Storage & 4K QuickSync**: The Intel i3-12100's **UHD 730 QuickSync** engine simultaneously hardware-transcodes multiple 4K HDR10 streams for external friends/family at under 15W of CPU power, while serving your 28TB ZFS pool and running 24/7 AI coding containers on the 1TB NVMe drive.
-3. **`balrog` (9800X3D + RTX 5070) — Zero Idle Power Waste**: Sleeps when you aren't gaming. When a batch job needs CUDA speed (indexing 50,000 photos in Immich or generating subtitles via Whisper), `gandalf` sends a Wake-on-LAN magic packet, `balrog` wakes up, crunches the queue, and goes back to sleep.
+3. **`balrog` (7800X3D + RTX 5070) — Zero Idle Power Waste**: Sleeps when you aren't gaming. When a batch job needs CUDA speed (indexing 50,000 photos in Immich or generating subtitles via Whisper), `gandalf` sends a Wake-on-LAN magic packet, `balrog` wakes up, crunches the queue, and goes back to sleep.
 4. **`strider` (M1 MacBook Pro w/ 32GB Unified Memory) — The Hidden AI Advantage**: While the RTX 5070 has fast CUDA cores, its 12GB VRAM cap limits model size. Your M1 MacBook Pro's **32GB Unified Memory** can allocate ~24GB directly to Apple Metal—meaning it can run larger **27B–32B parameter local coding/reasoning models** via Ollama when needed, while backing itself up automatically over Wi-Fi to `mithril/timemachine` on `erebor`.
 
 ---
@@ -306,7 +306,7 @@ flowchart LR
 
 ## 10. On-Demand GPU Beast: Wake-on-LAN Architecture (`balrog`)
 
-To prevent the 9800X3D + RTX 5070 Gaming PC from consuming 80W–120W of idle power 24/7 while preserving lightning-fast CUDA ML and Whisper subtitle generation:
+To prevent the 7800X3D + RTX 5070 Gaming PC from consuming 80W–120W of idle power 24/7 while preserving lightning-fast CUDA ML and Whisper subtitle generation:
 
 ```mermaid
 sequenceDiagram

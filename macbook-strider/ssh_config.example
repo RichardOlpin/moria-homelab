@@ -17,7 +17,7 @@ Host erebor
     ForwardAgent yes
     ServerAliveInterval 60
 
-# Node 3: balrog (AMD 9800X3D + RTX 5070 Gaming PC - Auto-Woken via gandalf!)
+# Node 3: balrog (AMD 7800X3D + RTX 5070 Gaming PC - Auto-Woken via gandalf!)
 # Typing `ssh balrog` from your MacBook tells gandalf to send a Wake-on-LAN
 # magic packet if balrog is asleep, waits for it to come online, and connects.
 Host balrog

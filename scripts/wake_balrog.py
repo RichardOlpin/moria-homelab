@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Moria Homelab — Wake 'balrog' (AMD 9800X3D + Nvidia RTX 5070 Gaming PC).
+Moria Homelab — Wake 'balrog' (AMD 7800X3D + Nvidia RTX 5070 Gaming PC).
 
 Sends a 102-byte UDP Wake-on-LAN magic packet across the local network and
 polls the target host until Ollama (port 11434) or SSH (port 22) responds.
@@ -84,7 +84,7 @@ def main() -> int:
     clean_mac = re.sub(r"[^0-9a-fA-F]", "", args.mac)
     formatted_mac = ":".join(clean_mac[i:i+2].upper() for i in range(0, 12, 2)) if len(clean_mac) == 12 else args.mac
 
-    print(f"🔥 Awakening the Balrog of Morgoth (Gaming PC: AMD 9800X3D + RTX 5070)...")
+    print(f"🔥 Awakening the Balrog of Morgoth (Gaming PC: AMD 7800X3D + RTX 5070)...")
     print(f"   Target MAC  : {formatted_mac}")
     print(f"   Host / Port : {args.host}:{args.port} (Ollama)")
 
@@ -99,7 +99,7 @@ def main() -> int:
         print("\n🧪 [DEMO MODE] Simulating boot sequence...")
         stages = [
             "Motherboard UEFI ACPI wake event received...",
-            "AMD Ryzen 7 9800X3D initialized...",
+            "AMD Ryzen 7 7800X3D initialized...",
             "Nvidia RTX 5070 CUDA driver loaded...",
             "Ollama server listening on port 11434...",
         ]

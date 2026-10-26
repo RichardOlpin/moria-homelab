@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # ==============================================================================
-# 'balrog' Auto-Sleep Idle Watcher (AMD 9800X3D + Nvidia RTX 5070)
+# 'balrog' Auto-Sleep Idle Watcher (AMD 7800X3D + Nvidia RTX 5070)
 #
 # When 'balrog' is woken via Wake-on-LAN by 'gandalf' or 'erebor' to run heavy
 # GPU tasks (Immich ML, Whisper subtitles, Ollama embeddings), this watcher
