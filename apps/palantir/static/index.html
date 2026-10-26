@@ -88,6 +88,41 @@
       color: #fda4af;
       background: rgba(244, 63, 94, 0.12);
     }
+    .balrog-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.35rem;
+      padding: 0.35rem 0.75rem;
+      border-radius: 999px;
+      font-size: 0.78rem;
+      font-weight: 700;
+      border: 1px solid rgba(244, 63, 94, 0.4);
+      background: rgba(244, 63, 94, 0.12);
+      color: #fda4af;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      user-select: none;
+    }
+    .balrog-pill:hover {
+      filter: brightness(1.15);
+      transform: translateY(-1px);
+    }
+    .balrog-pill.awake {
+      border-color: rgba(34, 197, 94, 0.55);
+      background: rgba(34, 197, 94, 0.15);
+      color: #86efac;
+      box-shadow: 0 0 12px rgba(34, 197, 94, 0.3);
+    }
+    .balrog-pill.waking {
+      border-color: rgba(245, 158, 11, 0.55);
+      background: rgba(245, 158, 11, 0.18);
+      color: #fde047;
+      animation: pulse-glow 1.5s infinite;
+    }
+    @keyframes pulse-glow {
+      0%, 100% { box-shadow: 0 0 4px rgba(245, 158, 11, 0.2); }
+      50% { box-shadow: 0 0 16px rgba(245, 158, 11, 0.65); }
+    }
     main {
       max-width: 1240px;
       margin: 2rem auto;
@@ -318,6 +353,7 @@
       <button class="mode-btn" onclick="loadLibrary('kids', this)">🧒 Kids Safe Vault</button>
       <button class="mode-btn" onclick="openCompanionTab(this)">📱 Blueprint &amp; Live Chat</button>
       <button class="mode-btn balrog-btn" onclick="wakeBalrog()">⚡ Awaken Balrog (WoL)</button>
+      <span id="balrogPill" class="balrog-pill" onclick="wakeBalrog()" title="Click to awaken Balrog or test in Demo mode">💤 Balrog: Sleeping</span>
     </div>
   </header>
 
@@ -654,10 +690,86 @@
       banner.textContent = `✅ ${data.message}`;
     }
 
+    let balrogPollInterval = null;
+
+    async function updateBalrogPill() {
+      try {
+        const res = await fetch('/api/balrog-status');
+        const data = await res.json();
+        const pill = document.getElementById('balrogPill');
+        if (!pill) return;
+        if (data.online) {
+          pill.className = 'balrog-pill awake';
+          pill.innerHTML = `🔥 Balrog: Awake (${data.simulated ? 'Demo' : 'RTX 5070'})`;
+          pill.title = data.message;
+        } else if (pill.className.includes('waking')) {
+          // Keep waking state while active polling is underway
+        } else {
+          pill.className = 'balrog-pill';
+          pill.innerHTML = `💤 Balrog: Sleeping`;
+          pill.title = 'AMD 9800X3D + RTX 5070 is sleeping in the shadow. Click to awaken!';
+        }
+        return data;
+      } catch (err) {
+        // silent catch
+      }
+    }
+
     async function wakeBalrog() {
-      const res = await fetch('/api/wake-balrog', { method: 'POST', headers: {'Content-Type': 'application/json'}, body: '{}' });
-      const data = await res.json();
-      document.getElementById('statusBanner').textContent = `⚡ ${data.message}`;
+      const choice = prompt(
+        "⚡ AWAKEN BALROG (Nvidia RTX 5070 Gaming PC via Wake-on-LAN)\n\n" +
+        "Enter target MAC address (or press OK for default AA:BB:CC:DD:EE:FF):\n" +
+        "Tip: Type 'demo' or 'simulate' to test the full live awakening flow immediately!",
+        "demo"
+      );
+      if (!choice) return;
+
+      const isSim = choice.trim().toLowerCase() === 'demo' || choice.trim().toLowerCase() === 'simulate';
+      const mac = isSim ? "AA:BB:CC:DD:EE:FF" : choice.trim();
+      const banner = document.getElementById('statusBanner');
+      const pill = document.getElementById('balrogPill');
+
+      if (pill) {
+        pill.className = 'balrog-pill waking';
+        pill.innerHTML = `⏳ Balrog: Waking...`;
+      }
+      banner.textContent = `📡 Broadcasting Wake-on-LAN magic packet to ${mac}...`;
+
+      try {
+        const res = await fetch('/api/wake-balrog', {
+          method: 'POST',
+          headers: {'Content-Type': 'application/json'},
+          body: JSON.stringify({ mac, simulate: isSim })
+        });
+        const data = await res.json();
+        if (data.error) {
+          banner.textContent = `⚠️ ${data.error}`;
+          if (pill) { pill.className = 'balrog-pill'; pill.innerHTML = `💤 Balrog: Sleeping`; }
+          return;
+        }
+
+        banner.textContent = `⚡ ${data.message} Listening for RTX 5070 boot...`;
+
+        let attempts = 0;
+        if (balrogPollInterval) clearInterval(balrogPollInterval);
+        balrogPollInterval = setInterval(async () => {
+          attempts++;
+          const status = await updateBalrogPill();
+          if (status && status.online) {
+            clearInterval(balrogPollInterval);
+            banner.textContent = `🔥 THE BALROG HAS AWAKENED! RTX 5070 CUDA active & ready for Immich ML & Whisper!`;
+          } else if (attempts >= 12) {
+            clearInterval(balrogPollInterval);
+            if (pill) { pill.className = 'balrog-pill'; pill.innerHTML = `💤 Balrog: Sleeping`; }
+            banner.textContent = `📡 Magic packet broadcast to ${mac}, but balrog did not respond on port 11434/22 yet. (Ensure WoL is enabled in UEFI/BIOS or try 'demo').`;
+          } else {
+            banner.textContent = `⏳ Magic packet broadcast! Awaiting boot & CUDA initialization (attempt ${attempts}/12)...`;
+          }
+        }, 1500);
+
+      } catch (err) {
+        banner.textContent = `❌ Wake-on-LAN error: ${err}`;
+      }
     }
 
     async function runAiSearch() {
@@ -689,6 +801,8 @@
     }
 
     loadLibrary('all');
+    updateBalrogPill();
+    setInterval(updateBalrogPill, 8000);
   </script>
 </body>
 </html>

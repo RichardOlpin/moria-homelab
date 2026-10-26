@@ -302,3 +302,41 @@ flowchart LR
    * ARM pings Jellyfin (`:8096`) so it instantly appears on your **TCL Google TV**, **Fire TV**, and **OnePlus phone**, and automatically **ejects the drive tray** so it's ready for your next disc!
 3. **Web Dashboard**: View rip progress, title logs, and disc health live at **`https://rip.moria.lan`** (or `http://erebor.moria.lan:8088`).
 
+---
+
+## 10. On-Demand GPU Beast: Wake-on-LAN Architecture (`balrog`)
+
+To prevent the 9800X3D + RTX 5070 Gaming PC from consuming 80W–120W of idle power 24/7 while preserving lightning-fast CUDA ML and Whisper subtitle generation:
+
+```mermaid
+sequenceDiagram
+    autonumber
+    actor You as You / Batch Job
+    participant Palantir as Palantír / gandalf (UpSnap)
+    participant Network as Local LAN (UDP Broadcast :9, :7)
+    participant Balrog as balrog (RTX 5070 Gaming PC)
+    participant CUDA as Ollama / Immich ML / Whisper
+
+    Note over You,Balrog: Step 1: Awakening the Shadow
+    You->>Palantir: Click '⚡ Awaken Balrog' (or ssh balrog)
+    Palantir->>Network: UDP Magic Packet (0xFF*6 + MAC*16) to 255.255.255.255 & 192.168.0.255
+    Network->>Balrog: Motherboard NIC receives ACPI wake event
+    Balrog->>Balrog: Resumes from S3/S5 sleep in ~8 to 12s
+    Palantir->>Balrog: Poll port 11434 (Ollama) & 22 (SSH)
+    Balrog-->>Palantir: Port 11434 responds -> Status: AWAKE (RTX 5070 Online)
+
+    Note over Balrog,CUDA: Step 2: High-Speed CUDA Workload
+    Palantir->>CUDA: Run AI embeddings / batch photo indexing / Whisper subtitles
+
+    Note over Balrog,Palantir: Step 3: Zero-Waste Auto-Sleep
+    Balrog->>Balrog: auto-sleep-watcher.sh detects GPU <10% & 0 SSH sessions for 20m
+    Balrog->>Balrog: Returns to sleep (systemctl suspend / Windows SetSuspendState)
+```
+
+### Wake-on-LAN Controls:
+1. **Web UI**: Click **`⚡ Awaken Balrog (WoL)`** in `Palantír` (`http://localhost:8080`) to send magic packets and watch live health polling.
+2. **CLI**: Run `python3 scripts/wake-balrog.py [--simulate]` from terminal or automations.
+3. **SSH ProxyCommand**: Typing `ssh balrog` from your MacBook Pro (`strider`) automatically wakes `balrog` before opening the remote shell.
+4. **UpSnap Dashboard**: Accessible via `https://upsnap.moria.lan` on `gandalf`.
+
+
