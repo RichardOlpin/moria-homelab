@@ -1,0 +1,5 @@
+# ==============================================================================
+# Udev rule for Automatic Ripping Machine (ARM) — Moria Homelab ('erebor')
+# Triggers ARM container when a commercial DVD, Blu-ray, or CD is inserted.
+# ==============================================================================
+ACTION=="change", SUBSYSTEM=="block", KERNEL=="sr[0-9]*", ENV{DISK_MEDIA_CHANGE}=="1", RUN+="/usr/local/bin/arm-udev-trigger.sh %k"

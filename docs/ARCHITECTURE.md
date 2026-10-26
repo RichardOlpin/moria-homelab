@@ -273,3 +273,32 @@ When you're ready to cut even more subscriptions later, these drop straight into
 | **Kavita** | `books.moria.lan` | Kindle Unlimited ($12/mo) & ComiXology | Fast `.epub`, `.pdf`, manga, and comic book server with a built-in web reader ideal for Fire Tablets. |
 | **Navidrome** | `music.moria.lan` | Spotify / Apple Music ($12–$17/mo) | Ultra-lightweight (~30MB RAM) Go music streamer compatible with Symfonium / Subsonic offline caching. |
 | **Home Assistant + Frigate** | `home.moria.lan` | Ring / Nest Cloud Cam Subscriptions | Local NVR object detection using `erebor`'s iGPU or `balrog` + Zigbee closet temp/humidity alerts. |
+
+---
+
+## 9. Headless Automatic DVD & Blu-ray Ripper (`rip.moria.lan`)
+
+To digitize physical discs into your Moria library without clicking through desktop ripping apps:
+
+```mermaid
+flowchart LR
+    Disc["Commercial DVD / Blu-ray<br/>Inserted into USB Drive"] --> Udev["Linux Kernel udev<br/>(/dev/sr0 'change' event)"]
+    Udev --> Trigger["/usr/local/bin/arm-udev-trigger.sh"]
+    Trigger --> Container["arm-ripper Container<br/>(:8088 / rip.moria.lan)"]
+    Container --> MakeMKV["MakeMKV<br/>(Main Feature Extraction)"]
+    MakeMKV --> HandBrake["HandBrake QSV<br/>(Intel QuickSync /dev/dri)"]
+    HandBrake --> Library["/mnt/mithril/media/movies/<br/>Title (Year) - 1080p.mp4"]
+    Library --> Eject["Auto-Eject Drive Tray<br/>& Trigger Jellyfin Refresh"]
+```
+
+### Turnkey Operation:
+1. **Hardware**: Plug any standard portable USB optical drive (e.g. the $22 LG Slim `GP65NB60`) into a front or rear USB port on `erebor`.
+2. **Zero-Touch Workflow**:
+   * Insert any commercial DVD, Blu-ray, or music CD.
+   * `erebor`'s udev daemon detects the media change and signals the `arm-ripper` container.
+   * ARM scrapes the official title, year, and poster metadata from OMDB/TheMovieDB.
+   * MakeMKV extracts the main feature film, and HandBrake uses `erebor`'s **Intel QuickSync iGPU (`/dev/dri`)** to transcode it into universal H.264 MP4 with 5.1 surround sound in **~4 to 7 minutes** (using ~12W of power).
+   * The completed film is placed directly into `/mnt/mithril/media/movies/<Title (Year)>/<Title (Year)> - 1080p.mp4`.
+   * ARM pings Jellyfin (`:8096`) so it instantly appears on your **TCL Google TV**, **Fire TV**, and **OnePlus phone**, and automatically **ejects the drive tray** so it's ready for your next disc!
+3. **Web Dashboard**: View rip progress, title logs, and disc health live at **`https://rip.moria.lan`** (or `http://erebor.moria.lan:8088`).
+
