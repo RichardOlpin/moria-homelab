@@ -916,6 +916,24 @@ class PalantirHandler(SimpleHTTPRequestHandler):
             })
             return
 
+        if parsed.path == "/api/balrog-sleep":
+            target_host = body.get("host", "").strip() or BALROG_HOST
+            target_port = int(body.get("port", 9090))
+            simulate = bool(body.get("simulate", False))
+
+            if simulate:
+                BALROG_STATE["simulated_wake_until"] = 0
+                self.send_json({"status": "sent", "simulated": True, "message": "Demo mode: balrog returned to sleep."})
+                return
+
+            try:
+                from ai_client import put_balrog_to_sleep
+                res = put_balrog_to_sleep(host=target_host, port=target_port)
+                self.send_json(res)
+            except Exception as exc:
+                self.send_json({"status": "error", "message": str(exc)}, status=500)
+            return
+
         if parsed.path == "/api/request":
             title = body.get("title", "Unknown Title")
             self.send_json({

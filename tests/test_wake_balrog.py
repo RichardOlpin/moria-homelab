@@ -64,6 +64,13 @@ class TestWakeBalrog(unittest.TestCase):
         self.assertIn("lm_studio", models)
         self.assertIn("ollama", models)
 
+    def test_put_balrog_to_sleep_offline_graceful(self):
+        from ai_client import put_balrog_to_sleep
+        # If webhook is not listening on test port, should return graceful error dict
+        res = put_balrog_to_sleep(host="127.0.0.1", port=59999, timeout=0.1)
+        self.assertEqual(res["status"], "error")
+        self.assertIn("message", res)
+
 
 if __name__ == "__main__":
     unittest.main()

@@ -102,18 +102,45 @@ def get_available_models() -> dict:
     return results
 
 
+SLEEP_WEBHOOK_PORT = int(os.environ.get("SLEEP_WEBHOOK_PORT", "9090"))
+
+
+def put_balrog_to_sleep(
+    host: str = BALROG_HOST,
+    port: int = SLEEP_WEBHOOK_PORT,
+    timeout: float = 3.0,
+) -> dict:
+    """Sends a remote sleep signal to the balrog sleep webhook listener."""
+    url = f"http://{host}:{port}/sleep"
+    try:
+        req = urllib.request.Request(
+            url,
+            data=b"",
+            headers={"Content-Type": "application/json"},
+            method="POST",
+        )
+        with urllib.request.urlopen(req, timeout=timeout) as resp:
+            data = json.loads(resp.read().decode("utf-8"))
+            return {"status": "sent", "response": data}
+    except Exception as exc:
+        return {"status": "error", "message": str(exc)}
+
+
 def query_balrog_ai(
     prompt: str,
     system_prompt: str = "You are the Palantír AI assistant running on Moria Homelab.",
     model: str | None = None,
     timeout: float = 60.0,
     auto_wake: bool = True,
+    auto_sleep: bool = False,
 ) -> dict:
     """Executes a chat completion on balrog, auto-waking the PC via WoL if asleep."""
     was_woken = False
     if auto_wake:
         woken, status = ensure_balrog_awake(timeout=25.0)
         was_woken = woken
+
+    result: dict | None = None
 
     # 1. Try LM Studio first (OpenAI compatible)
     if is_port_open(BALROG_HOST, LM_STUDIO_PORT):
@@ -140,7 +167,7 @@ def query_balrog_ai(
             with urllib.request.urlopen(req, timeout=timeout) as resp:
                 data = json.loads(resp.read())
                 content = data["choices"][0]["message"]["content"]
-                return {
+                result = {
                     "backend": "lm-studio",
                     "model": target_model,
                     "content": content,
@@ -151,7 +178,7 @@ def query_balrog_ai(
             print(f"⚠️ LM Studio query failed: {exc}", file=sys.stderr)
 
     # 2. Try Ollama (:11434)
-    if is_port_open(BALROG_HOST, OLLAMA_PORT):
+    if result is None and is_port_open(BALROG_HOST, OLLAMA_PORT):
         target_model = model or "llama3.2"
         payload = {
             "model": target_model,
@@ -167,7 +194,7 @@ def query_balrog_ai(
             )
             with urllib.request.urlopen(req, timeout=timeout) as resp:
                 data = json.loads(resp.read())
-                return {
+                result = {
                     "backend": "ollama",
                     "model": target_model,
                     "content": data.get("response", ""),
@@ -177,15 +204,29 @@ def query_balrog_ai(
         except Exception as exc:
             print(f"⚠️ Ollama query failed: {exc}", file=sys.stderr)
 
-    return {
-        "error": f"balrog is reachable, but neither LM Studio (port {LM_STUDIO_PORT}) nor Ollama (port {OLLAMA_PORT}) is serving requests.",
-        "woken": was_woken,
-        "host": BALROG_HOST,
-    }
+    if result is None:
+        result = {
+            "error": f"balrog is reachable, but neither LM Studio (port {LM_STUDIO_PORT}) nor Ollama (port {OLLAMA_PORT}) is serving requests.",
+            "woken": was_woken,
+            "host": BALROG_HOST,
+        }
+
+    # If auto-sleep requested, suspend balrog immediately
+    if auto_sleep:
+        sleep_res = put_balrog_to_sleep()
+        result["sleep_status"] = sleep_res
+
+    return result
 
 
 if __name__ == "__main__":
-    test_prompt = sys.argv[1] if len(sys.argv) > 1 else "Hello from Moria! Describe the Balrog in one epic sentence."
-    print(f"Testing Balrog AI Client with prompt: '{test_prompt}'")
-    res = query_balrog_ai(test_prompt)
-    print(json.dumps(res, indent=2))
+    if len(sys.argv) > 1 and sys.argv[1] == "--sleep":
+        print(f"Sending remote sleep command to {BALROG_HOST}:{SLEEP_WEBHOOK_PORT}...")
+        res = put_balrog_to_sleep()
+        print(json.dumps(res, indent=2))
+    else:
+        test_prompt = sys.argv[1] if len(sys.argv) > 1 else "Hello from Moria! Describe the Balrog in one epic sentence."
+        print(f"Testing Balrog AI Client with prompt: '{test_prompt}'")
+        res = query_balrog_ai(test_prompt)
+        print(json.dumps(res, indent=2))
+
