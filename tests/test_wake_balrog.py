@@ -58,6 +58,12 @@ class TestWakeBalrog(unittest.TestCase):
         # Reset
         BALROG_STATE["simulated_wake_until"] = 0.0
 
+    def test_ai_client_model_discovery(self):
+        from ai_client import get_available_models, is_port_open
+        models = get_available_models()
+        self.assertIn("lm_studio", models)
+        self.assertIn("ollama", models)
+
 
 if __name__ == "__main__":
     unittest.main()

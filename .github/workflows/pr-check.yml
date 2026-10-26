@@ -27,6 +27,7 @@ jobs:
         run: |
           python3 -c 'import yaml, sys; [yaml.safe_load(open(f)) for f in ["autoinstall/gandalf/user-data", "autoinstall/erebor/user-data", "autoinstall/gandalf/meta-data", "autoinstall/erebor/meta-data"]]'
           python3 -m py_compile apps/palantir/server.py
+          python3 -m py_compile apps/palantir/ai_client.py
           python3 -m py_compile scripts/wake_balrog.py
           python3 -m unittest discover tests
 

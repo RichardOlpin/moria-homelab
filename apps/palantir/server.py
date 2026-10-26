@@ -158,22 +158,29 @@ def check_balrog_status(host: str | None = None, port: int | None = None, timeou
         }
 
     is_online = False
+    is_lm_studio = False
+    is_ollama = False
     active_host = target_host
     candidate_hosts = [target_host]
     if target_host != "192.168.0.40":
         candidate_hosts.append("192.168.0.40")
 
     for h in candidate_hosts:
-        for p in [target_port, 22, 445]:
+        for p in [1234, target_port, 22, 445]:
             try:
                 with socket.create_connection((h, p), timeout=timeout):
                     is_online = True
                     active_host = h
-                    break
+                    if p == 1234:
+                        is_lm_studio = True
+                    if p == target_port or p == 11434:
+                        is_ollama = True
             except (socket.timeout, OSError):
                 continue
         if is_online:
             break
+
+    engine_desc = "LM Studio & Ollama" if (is_lm_studio and is_ollama) else ("LM Studio" if is_lm_studio else "Ollama & CUDA")
 
     return {
         "online": is_online,
@@ -183,13 +190,14 @@ def check_balrog_status(host: str | None = None, port: int | None = None, timeou
         "mac": BALROG_STATE.get("last_mac", BALROG_MAC),
         "gpu": "AMD Ryzen 7 7800X3D + Nvidia GeForce RTX 5070 (12GB GDDR7)",
         "services": {
-            "ollama": is_online,
+            "lm_studio": is_lm_studio,
+            "ollama": is_ollama,
             "immich_ml": is_online,
             "faster_whisper": is_online,
         },
         "last_woken": BALROG_STATE.get("last_woken"),
         "message": (
-            "🔥 Balrog is AWAKE — RTX 5070 CUDA ready for Ollama & Immich ML!"
+            f"🔥 Balrog is AWAKE — RTX 5070 active & ready for {engine_desc}!"
             if is_online
             else "💤 Balrog is SLEEPING in the shadow. Click '⚡ Awaken Balrog' to send a Wake-on-LAN magic packet."
         ),
