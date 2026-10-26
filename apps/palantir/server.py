@@ -13,6 +13,8 @@ Features:
   - One-click Free Open Movies seeder (/api/seed-movies -> seed-free-movies.sh).
   - Natural-language AI Mood & Runtime Search (/api/ai-search) with Ollama/LLM hook.
 """
+from __future__ import annotations
+
 import datetime
 import json
 import os
@@ -20,6 +22,7 @@ import platform
 import py_compile
 import re
 import shutil
+import socket
 import subprocess
 import sys
 import threading
@@ -41,6 +44,16 @@ JELLYFIN_URL = os.environ.get("JELLYFIN_URL", "http://erebor.moria.lan:8096").rs
 JELLYSEERR_URL = os.environ.get("JELLYSEERR_URL", "http://erebor.moria.lan:5055").rstrip("/")
 OLLAMA_URL = os.environ.get("OLLAMA_URL", "http://balrog.moria.lan:11434").rstrip("/")
 
+BALROG_MAC = os.environ.get("BALROG_MAC", "AA:BB:CC:DD:EE:FF")
+BALROG_HOST = os.environ.get("BALROG_HOST", "balrog.moria.lan")
+BALROG_PORT = int(os.environ.get("BALROG_PORT", "11434"))
+
+BALROG_STATE: dict = {
+    "simulated_wake_until": 0.0,
+    "last_woken": None,
+    "last_mac": BALROG_MAC,
+}
+
 
 def log_event(message: str) -> None:
     """Writes a timestamped log line to both stdout and apps/palantir/palantir.log."""
@@ -52,6 +65,128 @@ def log_event(message: str) -> None:
             f.write(line + "\n")
     except OSError:
         pass
+
+
+def get_lan_ip() -> str:
+    """Detects local LAN IPv4 address (e.g. 192.168.0.x or 10.x.x.x)."""
+    try:
+        with socket.socket(socket.AF_INET, socket.SOCK_DGRAM) as s:
+            s.connect(("8.8.8.8", 80))
+            return s.getsockname()[0]
+    except Exception:
+        pass
+    try:
+        out = subprocess.run(["ifconfig"], capture_output=True, text=True, check=False).stdout
+        lan_match = re.search(r"inet (192\.168\.\d+\.\d+|10\.\d+\.\d+\.\d+)", out)
+        if lan_match:
+            return lan_match.group(1)
+    except Exception:
+        pass
+    return "localhost"
+
+
+def send_wake_on_lan(mac_address: str, broadcast_ips: list[str] | None = None, ports: list[int] | None = None) -> dict:
+    """Constructs and broadcasts a 102-byte UDP Wake-on-LAN magic packet."""
+    clean_mac = re.sub(r"[^0-9a-fA-F]", "", mac_address)
+    if len(clean_mac) != 12:
+        raise ValueError(f"Invalid MAC address: '{mac_address}'. Expected 12 hexadecimal characters (e.g. AA:BB:CC:DD:EE:FF).")
+
+    mac_bytes = bytes.fromhex(clean_mac)
+    magic_packet = b"\xff" * 6 + mac_bytes * 16
+
+    destinations = list(broadcast_ips or [])
+    if "255.255.255.255" not in destinations:
+        destinations.append("255.255.255.255")
+
+    lan_ip = get_lan_ip()
+    if lan_ip and lan_ip.count(".") == 3 and lan_ip != "127.0.0.1" and lan_ip != "localhost":
+        subnet_prefix = lan_ip.rsplit(".", 1)[0]
+        subnet_bcast = f"{subnet_prefix}.255"
+        if subnet_bcast not in destinations:
+            destinations.append(subnet_bcast)
+
+    target_ports = list(ports or [9, 7])
+    sent_to: list[str] = []
+    errors: list[str] = []
+
+    with socket.socket(socket.AF_INET, socket.SOCK_DGRAM) as sock:
+        sock.setsockopt(socket.SOL_SOCKET, socket.SO_BROADCAST, 1)
+        for dest in destinations:
+            for p in target_ports:
+                try:
+                    sock.sendto(magic_packet, (dest, p))
+                    sent_to.append(f"{dest}:{p}")
+                except Exception as e:
+                    errors.append(f"{dest}:{p} ({e})")
+
+    formatted_mac = ":".join(clean_mac[i:i+2].upper() for i in range(0, 12, 2))
+    BALROG_STATE["last_woken"] = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+    BALROG_STATE["last_mac"] = formatted_mac
+    log_event(f"⚡ [Wake-on-LAN] Broadcast magic packet for balrog ({formatted_mac}) to {', '.join(sent_to)}")
+
+    return {
+        "status": "sent",
+        "mac": formatted_mac,
+        "sent_to": sent_to,
+        "errors": errors,
+    }
+
+
+def check_balrog_status(host: str | None = None, port: int | None = None, timeout: float = 0.5) -> dict:
+    """Checks if balrog is awake via TCP socket probe or active simulation."""
+    target_host = host or BALROG_HOST
+    target_port = port or BALROG_PORT
+    now = time.time()
+
+    if BALROG_STATE.get("simulated_wake_until", 0) > now:
+        remaining_sim = round(BALROG_STATE["simulated_wake_until"] - now, 1)
+        return {
+            "online": True,
+            "status": "awake",
+            "simulated": True,
+            "simulated_remaining_sec": remaining_sim,
+            "host": target_host,
+            "mac": BALROG_STATE.get("last_mac", BALROG_MAC),
+            "gpu": "AMD Ryzen 7 9800X3D + Nvidia GeForce RTX 5070 (12GB GDDR7)",
+            "services": {
+                "ollama": True,
+                "immich_ml": True,
+                "faster_whisper": True,
+            },
+            "last_woken": BALROG_STATE.get("last_woken"),
+            "message": "🔥 Balrog is AWAKE (Interactive Demo Active) — RTX 5070 CUDA ready!",
+        }
+
+    is_online = False
+    try:
+        with socket.create_connection((target_host, target_port), timeout=timeout):
+            is_online = True
+    except (socket.timeout, OSError):
+        try:
+            with socket.create_connection((target_host, 22), timeout=timeout):
+                is_online = True
+        except (socket.timeout, OSError):
+            is_online = False
+
+    return {
+        "online": is_online,
+        "status": "awake" if is_online else "sleeping",
+        "simulated": False,
+        "host": target_host,
+        "mac": BALROG_STATE.get("last_mac", BALROG_MAC),
+        "gpu": "AMD Ryzen 7 9800X3D + Nvidia GeForce RTX 5070 (12GB GDDR7)",
+        "services": {
+            "ollama": is_online,
+            "immich_ml": is_online,
+            "faster_whisper": is_online,
+        },
+        "last_woken": BALROG_STATE.get("last_woken"),
+        "message": (
+            "🔥 Balrog is AWAKE — RTX 5070 CUDA ready for Ollama & Immich ML!"
+            if is_online
+            else "💤 Balrog is SLEEPING in the shadow. Click '⚡ Awaken Balrog' to send a Wake-on-LAN magic packet."
+        ),
+    }
 
 # Known metadata enrichment for Open Movies & Owned Classics
 KNOWN_METADATA = {
@@ -524,6 +659,7 @@ def get_homelab_companion_data() -> dict:
         "conversations": conversations,
         "messages": all_messages[-60:],
         "recent_logs": recent_logs,
+        "balrog": check_balrog_status(),
     }
 
 
@@ -611,6 +747,14 @@ class PalantirHandler(SimpleHTTPRequestHandler):
         parsed = urlparse(self.path)
         if parsed.path == "/api/homelab-info":
             self.send_json(get_homelab_companion_data())
+            return
+
+        if parsed.path == "/api/balrog-status":
+            params = parse_qs(parsed.query)
+            host = params.get("host", [None])[0]
+            port_val = params.get("port", [None])[0]
+            port = int(port_val) if port_val and port_val.isdigit() else None
+            self.send_json(check_balrog_status(host=host, port=port))
             return
 
         if parsed.path == "/api/library":
@@ -732,9 +876,28 @@ class PalantirHandler(SimpleHTTPRequestHandler):
             return
 
         if parsed.path == "/api/wake-balrog":
+            target_mac = body.get("mac", "").strip() or BALROG_MAC
+            target_host = body.get("host", "").strip() or BALROG_HOST
+            simulate = bool(body.get("simulate", False))
+
+            try:
+                wol_res = send_wake_on_lan(target_mac)
+            except ValueError as ve:
+                self.send_json({"error": str(ve)}, status=400)
+                return
+
+            if simulate:
+                BALROG_STATE["simulated_wake_until"] = time.time() + 60
+                msg = f"Broadcast Wake-on-LAN magic packet to {wol_res['mac']}. Demo mode active (60s simulated wake)."
+            else:
+                msg = f"Broadcast Wake-on-LAN magic packet to {wol_res['mac']}. Awaiting RTX 5070 boot on {target_host}..."
+
             self.send_json({
                 "status": "sent",
-                "message": "Sent Wake-on-LAN magic packet via gandalf to balrog (RTX 5070 Gaming PC).",
+                "simulated": simulate,
+                "mac": wol_res["mac"],
+                "sent_to": wol_res["sent_to"],
+                "message": msg,
             })
             return
 
