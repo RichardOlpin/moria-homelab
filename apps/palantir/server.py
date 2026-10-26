@@ -44,7 +44,7 @@ JELLYFIN_URL = os.environ.get("JELLYFIN_URL", "http://erebor.moria.lan:8096").rs
 JELLYSEERR_URL = os.environ.get("JELLYSEERR_URL", "http://erebor.moria.lan:5055").rstrip("/")
 OLLAMA_URL = os.environ.get("OLLAMA_URL", "http://balrog.moria.lan:11434").rstrip("/")
 
-BALROG_MAC = os.environ.get("BALROG_MAC", "AA:BB:CC:DD:EE:FF")
+BALROG_MAC = os.environ.get("BALROG_MAC", "9C:6B:00:C0:60:9B")
 BALROG_HOST = os.environ.get("BALROG_HOST", "balrog.moria.lan")
 BALROG_PORT = int(os.environ.get("BALROG_PORT", "11434"))
 
@@ -158,15 +158,22 @@ def check_balrog_status(host: str | None = None, port: int | None = None, timeou
         }
 
     is_online = False
-    try:
-        with socket.create_connection((target_host, target_port), timeout=timeout):
-            is_online = True
-    except (socket.timeout, OSError):
-        try:
-            with socket.create_connection((target_host, 22), timeout=timeout):
-                is_online = True
-        except (socket.timeout, OSError):
-            is_online = False
+    active_host = target_host
+    candidate_hosts = [target_host]
+    if target_host != "192.168.0.40":
+        candidate_hosts.append("192.168.0.40")
+
+    for h in candidate_hosts:
+        for p in [target_port, 22, 445]:
+            try:
+                with socket.create_connection((h, p), timeout=timeout):
+                    is_online = True
+                    active_host = h
+                    break
+            except (socket.timeout, OSError):
+                continue
+        if is_online:
+            break
 
     return {
         "online": is_online,

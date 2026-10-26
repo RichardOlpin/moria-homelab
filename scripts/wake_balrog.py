@@ -19,8 +19,8 @@ import socket
 import sys
 import time
 
-DEFAULT_MAC = os.environ.get("BALROG_MAC", "AA:BB:CC:DD:EE:FF")
-DEFAULT_HOST = os.environ.get("BALROG_HOST", "balrog.moria.lan")
+DEFAULT_MAC = os.environ.get("BALROG_MAC", "9C:6B:00:C0:60:9B")
+DEFAULT_HOST = os.environ.get("BALROG_HOST", "192.168.0.40")
 DEFAULT_PORT = int(os.environ.get("BALROG_PORT", "11434"))
 
 
@@ -119,7 +119,7 @@ def main() -> int:
     while time.time() - start < args.timeout:
         attempt += 1
         elapsed = round(time.time() - start, 1)
-        if is_port_open(args.host, args.port) or is_port_open(args.host, 22):
+        if is_port_open(args.host, args.port) or is_port_open(args.host, 22) or is_port_open(args.host, 445):
             print(f"\n🔥 SUCCESS: Balrog responded in {elapsed}s (attempt {attempt})!")
             print(f"   Nvidia GeForce RTX 5070 CUDA engine is online and ready for Immich ML / Whisper.")
             return 0

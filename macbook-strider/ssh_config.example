@@ -23,4 +23,4 @@ Host erebor
 Host balrog
     HostName balrog.moria.lan
     User ubuntu
-    ProxyCommand ssh gandalf "if ! ping -c 1 -W 1 %h >/dev/null 2>&1; then wakeonlan AA:BB:CC:DD:EE:FF >&2; sleep 12; fi; nc %h %p"
+    ProxyCommand ssh gandalf "if ! ping -c 1 -W 1 %h >/dev/null 2>&1; then wakeonlan 9C:6B:00:C0:60:9B >&2; sleep 12; fi; nc %h %p"
