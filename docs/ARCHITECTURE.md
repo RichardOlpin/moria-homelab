@@ -61,17 +61,18 @@ flowchart TB
 
 ## 2. `erebor` Hardware Bill of Materials (BOM)
 
-### Option A (Top Budget Choice — ~$250 to $395): BYU Surplus Dell OptiPlex 7070 + ZFS Mirror
-Because you live near **BYU Surplus in Provo** ([`byuonlinesurplus` on eBay](https://www.ebay.com/str/byuonlinesurplus), with free local warehouse pickup), a surplus **Dell OptiPlex 7070 (`i5-9500`)** cuts the server cost by **60–75%** while keeping 6 desktop cores, Intel QuickSync 4K HDR transcoding, NVMe SSD boot/appdata, and ZFS redundancy.
+### Option A (Top Recommended Build — ~$310 to $450): Dell Precision 3630 Mid-Tower + ZFS Storage
+The **Dell Precision 3630 Mid-Tower** is the top-recommended hardware platform for `erebor`. Compared to small form factor (SFF) office desktops, the Precision 3630 provides **3 native 3.5" tool-less drive bays**, a **dedicated slim optical bay for automated DVD ripping**, **2 onboard M.2 NVMe slots**, 4 native SATA ports, and an efficient 300W–460W Gold power supply that easily handles spinning enterprise hard drives without proprietary power splitters.
+
+*(Note: If you prefer local Utah pickup in Provo, the **BYU Surplus Dell OptiPlex 7070 SFF ($145)** remains an excellent compact alternative).*
 
 | Component | Recommended Part & Source | Est. Price | Why This Part |
 | :--- | :--- | :--- | :--- |
-| **Base Server (`erebor`)** | **BYU Online Surplus** (Free Provo Pickup): [Dell OptiPlex 7070 (`i5-9500` 3.0GHz, 8GB DDR4, 256GB SSD)](https://www.ebay.com/itm/168664190631) *(or [Listing A](https://www.ebay.com/itm/168664126451))* | **$145** *(or ~$120 via Best Offer)* | 6-core `i5-9500` with **Intel UHD 630 QuickSync** (3–4x 4K HDR streams at ~12W idle), 4x DDR4 slots, included 256GB SSD for Ubuntu + Docker, and internal SATA ports. |
-| **Hard Drives (`mithril`)** | **2x 10TB** WD Ultrastar He10 (`HUH721010ALE600`) or Seagate Exos X10 (`ST10000NM0086`) SATA 6Gb/s CMR (Lot of 2 Tested / Refurb) | **~$190–$210 total** *(Pair)* | 2x 10TB in a redundant **ZFS Mirror = ~9.1 TiB usable fault-tolerant space**. Avoids the 14TB enterprise AI bubble ($350–$400/ea) while yielding 25% more storage per bay than 8TB drives. |
-| **External USB DVD Drive** | **LG Ultra Slim Portable DVD Writer (`GP65NB60`)** (or USB Blu-ray/DVD combo drive) | **$22** | Plugs into `erebor`'s front USB port for **100% automated DVD ripping** via `arm-ripper` (`rip.moria.lan`)—insert a disc and it rips, QuickSync-transcodes into `mithril/media/movies`, and auto-ejects. |
-| **RAM Upgrade *(Optional)* ** | 16GB (2x8GB) DDR4-2666/3200 Desktop UDIMM | **$0 today** *(+$25 later)* | The included 8GB DDR4 runs the full stack on day one; dropping 2x8GB into the empty slots bumps total RAM to **24GB** for larger ZFS ARC cache. |
-| **2nd Bay Adapter *(If SFF)* ** | SATA Power Y-Splitter + Optical-Bay 3.5" Mount | **$7** | Lets the slim SFF chassis power and mount the 2nd 3.5" HDD in the internal optical bay spot (not needed if using Precision 3630 Tower). |
-| **Total (Budget Build)** | | **~$364 – ~$384 (Full 2-Drive 10TB Mirrored Stack)** | **Saves ~$600+** vs. a custom build while providing ~9.1 TiB fault-tolerant storage, full 4K QuickSync transcoding, and automated DVD ripping. |
+| **Base Server (`erebor`)** | **eBay [Dell Precision 3630 Tower](https://www.ebay.com/sch/i.html?_nkw=Dell+Precision+3630+Tower&LH_BIN=1&_sop=15)** (Core `i5-8500` or `i5-9500`, 8GB–16GB RAM, 256GB SSD) | **~$150 – $175** *(Shipped)* | 6-core Intel CPU with **Intel UHD 630 QuickSync** (3–4x 4K HDR streams in hardware at ~12W idle), 3 native 3.5" drive caddies, 2x M.2 NVMe slots, 4x DDR4 slots, and 4 native SATA ports. |
+| **Hard Drives (`mithril`)** *(Choose 1 Path)* | **Path 1 (Redundant Mirror):** 2x 8TB ($140–$160) or 2x 10TB ($190–$220) SATA Enterprise CMR<br>**Path 2 (Single Big Drive):** 1x 14TB SATA Enterprise CMR ($250–$300) | **~$140 – $280** | **Path 1** provides immediate 1-drive fault tolerance (~7.3 TiB or ~9.1 TiB usable).<br>**Path 2** maximizes day-one capacity (~12.7 TiB usable) while keeping cash outlay low; convert to mirror anytime via `zpool attach`. |
+| **Optical Ripper Drive** | **Internal Slim 9.5mm DVD/CD-RW Drive** (fitted in 3630 front bay) or **LG Portable USB (`GP65NB60`)** | **$18 – $22** | Dedicated to **100% automated DVD/CD ripping** via `arm-ripper` (`rip.moria.lan`)—insert disc, auto-transcode via QuickSync to H.265 into `mithril/media/movies`, and auto-eject. |
+| **RAM *(Included or Upgraded)* ** | 8GB–16GB DDR4 (Included) *(Optional 2x8GB kit to reach 24GB–32GB)* | **$0 today** *(+$25 later)* | Included 8GB–16GB runs Ubuntu Server, ZFS, Jellyfin, and all Docker containers on day one. |
+| **Total (Dell Precision 3630 Build)** | | **~$310 – ~$475** *(Depending on HDD choice)* | **Saves $500–$680** vs. a custom DIY build while delivering 3 native drive bays, native optical ripping, 4K QuickSync, and ZFS data integrity. |
 
 ---
 
