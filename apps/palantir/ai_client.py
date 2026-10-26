@@ -120,7 +120,11 @@ def put_balrog_to_sleep(
             method="POST",
         )
         with urllib.request.urlopen(req, timeout=timeout) as resp:
-            data = json.loads(resp.read().decode("utf-8"))
+            raw_text = resp.read().decode("utf-8").strip()
+            try:
+                data = json.loads(raw_text)
+            except Exception:
+                data = {"status": raw_text or "sleeping"}
             return {"status": "sent", "response": data}
     except Exception as exc:
         return {"status": "error", "message": str(exc)}
