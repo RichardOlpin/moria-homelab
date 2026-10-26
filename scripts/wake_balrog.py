@@ -89,7 +89,11 @@ def main() -> int:
         try:
             req = urllib.request.Request(f"http://{args.host}:{webhook_port}/sleep", data=b"", method="POST")
             with urllib.request.urlopen(req, timeout=3.0) as resp:
-                data = json.loads(resp.read().decode("utf-8"))
+                raw_text = resp.read().decode("utf-8").strip()
+                try:
+                    data = json.loads(raw_text)
+                except Exception:
+                    data = {"status": raw_text or "sleeping"}
                 print(f"✓ Balrog acknowledged sleep signal: {data}")
                 return 0
         except Exception as exc:
