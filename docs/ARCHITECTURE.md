@@ -339,5 +339,6 @@ sequenceDiagram
 2. **CLI**: Run `python3 scripts/wake-balrog.py [--simulate]` from terminal or automations.
 3. **SSH ProxyCommand**: Typing `ssh balrog` from your MacBook Pro (`strider`) automatically wakes `balrog` before opening the remote shell.
 4. **UpSnap Dashboard**: Accessible via `https://upsnap.moria.lan` on `gandalf`.
+5. **Verified Runbook & Telemetry**: See full benchmark data and configuration guide in [Balrog Wake-on-LAN Runbook](file:///Users/laceylamb/Documents/antigravity/jolly-bohr/docs/BALROG_WAKE_ON_LAN_RUNBOOK.md).
 
 
