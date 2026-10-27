@@ -35,10 +35,12 @@ auth.{$PUBLIC_DOMAIN} {
 # 2. INTERNAL MORIA.LAN SERVICES (Strictly Restricted to LAN & VPN)
 # ==============================================================================
 
-dns.{$LOCAL_DOMAIN} {
+dns.{$LOCAL_DOMAIN}, pihole.{$LOCAL_DOMAIN} {
 	tls internal
 	import lan_only
-	reverse_proxy adguard:80
+	@root path /
+	redir @root /admin/ 302
+	reverse_proxy pihole:80
 }
 
 vault.{$LOCAL_DOMAIN} {

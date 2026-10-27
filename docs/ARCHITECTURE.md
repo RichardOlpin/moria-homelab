@@ -20,7 +20,7 @@ flowchart TB
         subgraph Yoga["Node 1: gandalf (2015 Lenovo Yoga 900)"]
             direction TB
             YSpecs["Ubuntu 24.04 LTS | i7-6500U | 16GB RAM | 512GB SSD<br/>Built-in Battery (60% Cap) = Free 3hr UPS"]
-            YApps["• Caddy Reverse Proxy + CrowdSec ('You shall not pass!')<br/>• AdGuard Home (Split-Horizon *.moria.lan DNS)<br/>• PocketID Passkey SSO ('Speak, friend, and enter')<br/>• Vaultwarden & Forgejo Git<br/>• UpSnap Wake-on-LAN Controller"]
+            YApps["• Caddy Reverse Proxy + CrowdSec ('You shall not pass!')<br/>• Pi-hole (Split-Horizon *.moria.lan DNS)<br/>• PocketID Passkey SSO ('Speak, friend, and enter')<br/>• Vaultwarden & Forgejo Git<br/>• UpSnap Wake-on-LAN Controller"]
         end
 
         subgraph NAS["Node 2: erebor (New Custom i3-12100 mATX NAS)"]
@@ -52,7 +52,7 @@ flowchart TB
 ```
 
 ### Why This 4-Node Split Works So Well
-1. **`gandalf` (Lenovo Yoga 900) — Zero Single Point of Failure**: Because the Yoga 900 has an internal battery (capped at 60% via Ubuntu's `ideapad_acpi` driver), putting **DNS (AdGuard Home), Reverse Proxy (Caddy), Passwords (Vaultwarden), and Git (Forgejo)** on it means you can reboot `erebor` or survive a brief power outage without taking down household internet.
+1. **`gandalf` (Lenovo Yoga 900) — Zero Single Point of Failure**: Because the Yoga 900 has an internal battery (capped at 60% via Ubuntu's `ideapad_acpi` driver), putting **DNS (Pi-hole), Reverse Proxy (Caddy), Passwords (Vaultwarden), and Git (Forgejo)** on it means you can reboot `erebor` or survive a brief power outage without taking down household internet.
 2. **`erebor` (Custom i3-12100 NAS) — 28TB `mithril` Storage & 4K QuickSync**: The Intel i3-12100's **UHD 730 QuickSync** engine simultaneously hardware-transcodes multiple 4K HDR10 streams for external friends/family at under 15W of CPU power, while serving your 28TB ZFS pool and running 24/7 AI coding containers on the 1TB NVMe drive.
 3. **`balrog` (7800X3D + RTX 5070) — Zero Idle Power Waste**: Sleeps when you aren't gaming. When a batch job needs CUDA speed (indexing 50,000 photos in Immich or generating subtitles via Whisper), `gandalf` sends a Wake-on-LAN magic packet, `balrog` wakes up, crunches the queue, and goes back to sleep.
 4. **`strider` (M1 MacBook Pro w/ 32GB Unified Memory) — The Hidden AI Advantage**: While the RTX 5070 has fast CUDA cores, its 12GB VRAM cap limits model size. Your M1 MacBook Pro's **32GB Unified Memory** can allocate ~24GB directly to Apple Metal—meaning it can run larger **27B–32B parameter local coding/reasoning models** via Ollama when needed, while backing itself up automatically over Wi-Fi to `mithril/timemachine` on `erebor`.
@@ -154,7 +154,7 @@ sequenceDiagram
     autonumber
     actor Family as Friend / Family Member
     actor You as You (Laptop / Phone)
-    participant DNS as Public DNS / Split-Horizon AdGuard
+    participant DNS as Public DNS / Split-Horizon Pi-hole
     participant Caddy as edge-yoga: Caddy + CrowdSec (:443)
     participant Auth as edge-yoga: PocketID / Authelia
     participant NAS as nas-core: Jellyfin / Custom Media App
@@ -175,7 +175,7 @@ sequenceDiagram
 ### Key Security Rules to Own Your Network Safely
 1. **Strict Split Between Public and Private Services**:
    * **Publicly Routed (via Caddy on ports 80/443)**: *Only* the apps external friends/family need: your custom Media App / Jellyfin (`watch.yourdomain.com`), Overseerr/Jellyseerr requests (`request.yourdomain.com`), and optionally Immich public share links.
-   * **VPN-Only (WireGuard / Tailscale)**: Everything else (`*.internal.yourdomain.com` — AI coding IDEs, Forgejo, AdGuard, Home Assistant, Vaultwarden admin, `*arr` apps) only binds to your private LAN IP / VPN subnet.
+   * **VPN-Only (WireGuard / Tailscale)**: Everything else (`*.internal.yourdomain.com` — AI coding IDEs, Forgejo, Pi-hole, Home Assistant, Vaultwarden admin, `*arr` apps) only binds to your private LAN IP / VPN subnet.
 2. **CrowdSec + GeoIP Blocking on Caddy**:
    * Install the CrowdSec Caddy bouncer on `edge-yoga` and restrict public ingress to your country's GeoIP block. This eliminates 99% of automated bot scans on port 443.
 3. **Passkey SSO Gate (PocketID + TinyAuth or Authelia)**:
@@ -193,7 +193,7 @@ Because you already pay for cloud AI tokens (Google Gemini Pro, Claude, ChatGPT)
    * Accessible from your work laptop, Gaming PC, or iPad via browser (`code-server`) or native SSH remote (VS Code / Cursor / Antigravity Remote-SSH).
    * Pre-loaded with Claude Code, Gemini CLI, Codex CLI, Docker CLI, Go, Node/Bun, Python, and FFmpeg.
 2. **Isolated Preview Environments**:
-   * Configure a wildcard subdomain `*.dev.home.yourdomain.com` in Caddy + AdGuard Home pointing to `nas-core`.
+   * Configure a wildcard subdomain `*.dev.home.yourdomain.com` in Caddy + Pi-hole pointing to `nas-core`.
    * When an AI agent builds a new lightweight app (e.g., a custom family chore tracker, budget dashboard, or your custom media server), it spins up a container with a Caddy/Traefik label and gives you a live URL like `https://my-plex.dev.home.yourdomain.com` in seconds.
 
 ### Architectural Shortcut for Your Custom "Plex-Like" App
@@ -216,9 +216,9 @@ flowchart LR
 
 1. **Let a battle-tested engine handle `/dev/dri` VAAPI/QuickSync HLS streaming** (either Jellyfin's REST API used purely as a headless backend, or a focused Go service wrapping `ffmpeg -hwaccel qsv`).
 2. **Focus your AI coding agents on the high-value differentiators**:
-   * **Natural Language Discovery**: Index your movie plot summaries, themes, and subtitles into Postgres (`pgvector`) using embeddings generated on your RTX 5070 (`gpu-beast`), so you can search *"something funny and fast-paced under 95 minutes we haven't watched"* instead of scrolling rows for 30 minutes.
-   * **Zero-Bloat UI**: No ad-supported live TV tabs or cluttered menus—just a clean, instant interface tailored to your household.
-   * **One-Click Request Pipeline**: Integrate directly with Prowlarr/Radarr/Sonarr APIs inside the same UI so searching for a movie you *don't* have lets you grab it in one click.
+    * **Natural Language Discovery**: Index your movie plot summaries, themes, and subtitles into Postgres (`pgvector`) using embeddings generated on your RTX 5070 (`gpu-beast`), so you can search *"something funny and fast-paced under 95 minutes we haven't watched"* instead of scrolling rows for 30 minutes.
+    * **Zero-Bloat UI**: No ad-supported live TV tabs or cluttered menus—just a clean, instant interface tailored to your household.
+    * **One-Click Request Pipeline**: Integrate directly with Prowlarr/Radarr/Sonarr APIs inside the same UI so searching for a movie you *don't* have lets you grab it in one click.
 
 ---
 
@@ -246,7 +246,7 @@ flowchart LR
 
 1. **Phase 1: Repurpose `edge-yoga` Today ($0 spent)**
    * Install Debian 12 minimal on the Yoga 900, configure lid-switch & battery conservation mode.
-   * Spin up Docker Engine, **AdGuard Home**, **Caddy**, **Forgejo**, **Komodo**, and **Vaultwarden**.
+   * Spin up Docker Engine, **Pi-hole**, **Caddy**, **Forgejo**, **Komodo**, and **Vaultwarden**.
 2. **Phase 2: Build `nas-core` & Configure ZFS**
    * Assemble the i3-12100 NAS (or flash Debian onto the 4-bay NAS), install the 1TB NVMe + 3x 14TB HDDs, and run a 24-hour `badblocks` / SMART burn-in test on the recertified drives before creating the `raidz1` pool.
    * Join `nas-core` to Komodo so you can deploy containers to it from your Git repo.

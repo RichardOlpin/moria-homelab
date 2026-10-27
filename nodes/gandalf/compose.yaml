@@ -24,19 +24,27 @@ services:
       - mellon-net
 
   # ============================================================================
-  # AdGuard Home: Split-Horizon DNS (*.moria.lan) & Network Ad-Blocker
+  # Pi-hole: Split-Horizon DNS (*.moria.lan) & Network Ad-Blocker
   # ============================================================================
-  adguard:
-    image: adguard/adguardhome:latest
-    container_name: adguard
+  pihole:
+    image: pihole/pihole:latest
+    container_name: pihole
     restart: unless-stopped
     ports:
       - "53:53/tcp"
       - "53:53/udp"
-      - "3000:3000/tcp" # Initial setup port, then proxied via dns.moria.lan
+      - "8080:80/tcp" # Direct Web UI access fallback
+    environment:
+      - TZ=${TZ:-America/Denver}
+      - WEBPASSWORD=${PIHOLE_PASSWORD:-moria}
+      - FTLCONF_LOCAL_IPV4=${GANDALF_IP:-192.168.1.10}
+      - PIHOLE_DNS_1=1.1.1.1
+      - PIHOLE_DNS_2=1.0.0.1
     volumes:
-      - /opt/gandalf/adguard/work:/opt/adguardhome/work
-      - /opt/gandalf/adguard/conf:/opt/adguardhome/conf
+      - /opt/gandalf/pihole/etc-pihole:/etc/pihole
+      - /opt/gandalf/pihole/etc-dnsmasq.d:/etc/dnsmasq.d
+    cap_add:
+      - NET_ADMIN
     networks:
       - mellon-net
 

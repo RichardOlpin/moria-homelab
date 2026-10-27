@@ -79,9 +79,9 @@ EOF
 systemctl daemon-reload
 systemctl enable --now lenovo-battery-conservation.service || true
 
-echo "==> [6/6] Freeing Port 53 for AdGuard Home (disabling systemd-resolved stub)..."
+echo "==> [6/6] Freeing Port 53 for Pi-hole (disabling systemd-resolved stub)..."
 mkdir -p /etc/systemd/resolved.conf.d
-cat << 'EOF' > /etc/systemd/resolved.conf.d/adguardhome.conf
+cat << 'EOF' > /etc/systemd/resolved.conf.d/pihole.conf
 [Resolve]
 DNS=127.0.0.1
 DNSStubListener=no
@@ -90,7 +90,16 @@ ln -sf /run/systemd/resolve/resolv.conf /etc/resolv.conf
 systemctl reload-or-restart systemd-resolved
 
 echo "==> Creating stack directories under /opt/gandalf..."
-mkdir -p /opt/gandalf/{caddy,adguard/work,adguard/conf,vaultwarden,forgejo,pocketid,upsnap}
+mkdir -p /opt/gandalf/{caddy,pihole/etc-pihole,pihole/etc-dnsmasq.d,vaultwarden,forgejo,pocketid,upsnap}
+
+# Pre-seed split-horizon DNS for *.moria.lan in Pi-hole dnsmasq config if not present
+if [ ! -f /opt/gandalf/pihole/etc-dnsmasq.d/02-moria-lan.conf ]; then
+    cat << 'EOF' > /opt/gandalf/pihole/etc-dnsmasq.d/02-moria-lan.conf
+# Split-Horizon DNS: Route *.moria.lan to gandalf reverse proxy
+address=/moria.lan/192.168.1.10
+EOF
+fi
+
 if [[ -n "${SUDO_USER:-}" ]]; then
     chown -R "$SUDO_USER:$SUDO_USER" /opt/gandalf
 fi
