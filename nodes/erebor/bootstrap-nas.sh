@@ -50,6 +50,24 @@ if ! command -v docker &> /dev/null; then
     apt-get install -y docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin
 fi
 
+# Detect NVIDIA GPU (Quadro P1000) and configure NVIDIA Container Toolkit for AI Orchestrator
+if lspci | grep -qi nvidia; then
+    echo "==> [3b/7] NVIDIA GPU detected (Quadro P1000). Installing drivers & NVIDIA Container Toolkit..."
+    apt-get install -y ubuntu-drivers-common
+    ubuntu-drivers install --gpgpu || apt-get install -y nvidia-driver-535-server nvidia-utils-535-server
+
+    if ! dpkg -l | grep -q nvidia-container-toolkit; then
+        curl -fsSL https://nvidia.github.io/libnvidia-container/gpgkey | gpg --dearmor -o /usr/share/keyrings/nvidia-container-toolkit-keyring.gpg
+        curl -s -L https://nvidia.github.io/libnvidia-container/stable/deb/nvidia-container-toolkit.list | \
+          sed 's#deb https://#deb [signed-by=/usr/share/keyrings/nvidia-container-toolkit-keyring.gpg] https://#g' | \
+          tee /etc/apt/sources.list.d/nvidia-container-toolkit.list
+        apt-get update -y
+        apt-get install -y nvidia-container-toolkit
+        nvidia-ctk runtime configure --runtime=docker
+        systemctl restart docker || true
+    fi
+fi
+
 if [[ -n "${SUDO_USER:-}" ]]; then
     usermod -aG docker,render,video,cdrom "$SUDO_USER"
     echo "    Added '$SUDO_USER' to docker, render, video, and cdrom groups (for QuickSync /dev/dri & USB DVD /dev/sr0)."
@@ -61,9 +79,9 @@ ARC_MAX_BYTES=$(( TOTAL_MEM_BYTES / 2 ))
 echo "options zfs zfs_arc_max=${ARC_MAX_BYTES}" > /etc/modprobe.d/zfs.conf
 echo "    Set zfs_arc_max=${ARC_MAX_BYTES} bytes (~$(( ARC_MAX_BYTES / 1024 / 1024 / 1024 ))GB)."
 
-echo "==> [5/7] Preparing fast NVMe directories for Docker, DVD Ripper & AI Workspaces..."
+echo "==> [5/7] Preparing fast NVMe directories for Docker, DVD Ripper, AI Orchestrator & Workspaces..."
 mkdir -p /mnt/nvme/{appdata,workspaces,stacks}
-mkdir -p /mnt/nvme/appdata/{jellyfin,immich-pg,immich-cache,radarr,sonarr,prowlarr,bazarr,jellyseerr,code-server,romm/resources,romm/redis-data,romm-db,arm/config}
+mkdir -p /mnt/nvme/appdata/{jellyfin,immich-pg,immich-cache,radarr,sonarr,prowlarr,bazarr,jellyseerr,code-server,romm/resources,romm/redis-data,romm-db,arm/config,ollama}
 cp "${BASH_SOURCE[0]%/*}/configs/arm.yaml" /mnt/nvme/appdata/arm/config/arm.yaml
 if [[ -n "${SUDO_USER:-}" ]]; then
     chown -R "$SUDO_USER:$SUDO_USER" /mnt/nvme

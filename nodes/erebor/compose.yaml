@@ -238,4 +238,27 @@ services:
     ports:
       - "8088:8080"
 
+  # ============================================================================
+  # Always-On Local AI Orchestrator (Ollama on Quadro P1000 4GB GPU)
+  # 24/7 fast router model (Qwen 2.5 3B / Llama 3.2 3B) for intent classification,
+  # phone/laptop interface, and smart task dispatching to balrog or frontier APIs.
+  # ============================================================================
+  ollama-orchestrator:
+    image: ollama/ollama:latest
+    container_name: ollama-orchestrator
+    restart: unless-stopped
+    ports:
+      - "11434:11434"
+    volumes:
+      - /mnt/nvme/appdata/ollama:/root/.ollama
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: all
+              capabilities: [gpu]
+    environment:
+      - OLLAMA_KEEP_ALIVE=24h
+
 

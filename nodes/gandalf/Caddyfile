@@ -97,3 +97,9 @@ rip.{$LOCAL_DOMAIN} {
 	reverse_proxy {$EREBOR_IP}:8088 # Automatic Ripping Machine (USB DVD Auto-Ripper)
 }
 
+agent.{$LOCAL_DOMAIN} {
+	tls internal
+	import lan_only
+	reverse_proxy {$EREBOR_IP}:11434 # 24/7 Local AI Orchestrator (Ollama on Quadro P1000)
+}
+
