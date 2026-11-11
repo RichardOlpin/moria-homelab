@@ -81,7 +81,7 @@ echo "    Set zfs_arc_max=${ARC_MAX_BYTES} bytes (~$(( ARC_MAX_BYTES / 1024 / 10
 
 echo "==> [5/7] Preparing fast NVMe directories for Docker, DVD Ripper, AI Orchestrator & Workspaces..."
 mkdir -p /mnt/nvme/{appdata,workspaces,stacks}
-mkdir -p /mnt/nvme/appdata/{jellyfin,immich-pg,immich-cache,radarr,sonarr,prowlarr,bazarr,seerr,qbittorrent,code-server,romm/resources,romm/redis-data,romm-db,arm/config,ollama}
+mkdir -p /mnt/nvme/appdata/{jellyfin,caddy,immich-pg,immich-cache,radarr,sonarr,prowlarr,bazarr,seerr,qbittorrent,code-server,romm/resources,romm/redis-data,romm-db,arm/config,ollama}
 cp "${BASH_SOURCE[0]%/*}/configs/arm.yaml" /mnt/nvme/appdata/arm/config/arm.yaml
 if [[ -n "${SUDO_USER:-}" ]]; then
     chown -R "$SUDO_USER:$SUDO_USER" /mnt/nvme
