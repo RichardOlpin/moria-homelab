@@ -1,0 +1,28 @@
+/* Custom styles to enhance card text readability and contrast against backgrounds */
+
+/* Give cards a solid dark slate backdrop with frosted glass effect */
+div[class*="bg-slate-"],
+div[class*="bg-zinc-"],
+div[class*="bg-neutral-"],
+div[class*="bg-gray-"],
+.service-card,
+.bookmark-card {
+  background-color: rgba(15, 23, 42, 0.82) !important;
+  backdrop-filter: blur(12px) !important;
+  -webkit-backdrop-filter: blur(12px) !important;
+}
+
+/* Add crisp drop shadow to all text inside cards and widgets */
+.service-card *,
+.bookmark-card *,
+div[class*="service-"] *,
+div[class*="widget-"] * {
+  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.9) !important;
+}
+
+/* Ensure secondary text and descriptions are bright enough to read */
+.text-slate-400,
+.text-gray-400,
+.text-zinc-400 {
+  color: #cbd5e1 !important; /* Tailwind slate-300 */
+}
