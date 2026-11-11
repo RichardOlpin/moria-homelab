@@ -1,0 +1,42 @@
+# ==============================================================================
+# Caddyfile for Moria Homelab Reverse Proxy (*.moria.lan) on erebor
+# ==============================================================================
+
+{
+    admin off
+}
+
+# Jellyfin / Palantir Media Engine
+http://palantir.moria.lan, http://jellyfin.moria.lan {
+    reverse_proxy jellyfin:8096
+}
+
+# Palantir Custom AI Frontend Portal
+http://portal.moria.lan, http://ui.moria.lan {
+    reverse_proxy palantir-ui:8080
+}
+
+# Seerr Request Portal
+http://seerr.moria.lan, http://request.moria.lan {
+    reverse_proxy seerr:5055
+}
+
+# Radarr Movie Acquisition
+http://radarr.moria.lan {
+    reverse_proxy radarr:7878
+}
+
+# Sonarr TV Acquisition
+http://sonarr.moria.lan {
+    reverse_proxy sonarr:8989
+}
+
+# Prowlarr Indexer Manager
+http://prowlarr.moria.lan {
+    reverse_proxy prowlarr:9696
+}
+
+# qBittorrent Download Client
+http://downloads.moria.lan, http://qbittorrent.moria.lan {
+    reverse_proxy qbittorrent:8085
+}

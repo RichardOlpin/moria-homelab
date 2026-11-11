@@ -2,6 +2,21 @@ name: erebor-core
 
 services:
   # ============================================================================
+  # Caddy Reverse Proxy (*.moria.lan on Port 80/443 - No Port Numbers Needed)
+  # ============================================================================
+  caddy:
+    image: caddy:alpine
+    container_name: caddy
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./configs/caddy/Caddyfile:/etc/caddy/Caddyfile:ro
+      - /mnt/nvme/appdata/caddy/data:/data
+      - /mnt/nvme/appdata/caddy/config:/config
+
+  # ============================================================================
   # Palantir Custom AI Frontend & Fire Tablet Portal (Port 8080)
   # ============================================================================
   palantir-ui:
