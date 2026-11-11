@@ -140,6 +140,24 @@ services:
     ports:
       - "8989:8989"
 
+  qbittorrent:
+    image: lscr.io/linuxserver/qbittorrent:latest
+    container_name: qbittorrent
+    restart: unless-stopped
+    environment:
+      - PUID=${PUID:-1000}
+      - PGID=${PGID:-1000}
+      - TZ=${TZ:-America/Denver}
+      - WEBUI_PORT=8085
+      - TORRENTING_PORT=6881
+    volumes:
+      - /mnt/nvme/appdata/qbittorrent:/config
+      - /mnt/mithril/media/downloads:/data/media/downloads
+    ports:
+      - "8085:8085"
+      - "6881:6881"
+      - "6881:6881/udp"
+
   seerr:
     image: ghcr.io/seerr-team/seerr:latest
     init: true
