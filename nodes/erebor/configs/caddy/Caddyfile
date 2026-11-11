@@ -59,5 +59,10 @@ http://home.moria.lan, http://dashboard.moria.lan {
     reverse_proxy homepage:3000
 }
 
+# Paperless-ngx Document Vault
+http://docs.moria.lan, http://paperless.moria.lan {
+    reverse_proxy paperless:8000
+}
+
 
 
