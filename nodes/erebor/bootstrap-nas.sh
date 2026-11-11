@@ -81,8 +81,27 @@ echo "    Set zfs_arc_max=${ARC_MAX_BYTES} bytes (~$(( ARC_MAX_BYTES / 1024 / 10
 
 echo "==> [5/7] Preparing fast NVMe directories for Docker, DVD Ripper, AI Orchestrator & Workspaces..."
 mkdir -p /mnt/nvme/{appdata,workspaces,stacks}
-mkdir -p /mnt/nvme/appdata/{jellyfin,caddy,immich-pg,immich-cache,radarr,sonarr,prowlarr,bazarr,seerr,qbittorrent,code-server,romm/resources,romm/redis-data,romm-db,arm/config,ollama}
+mkdir -p /mnt/nvme/appdata/{jellyfin,caddy,pihole/etc-pihole,pihole/etc-dnsmasq.d,immich-pg,immich-cache,radarr,sonarr,prowlarr,bazarr,seerr,qbittorrent,code-server,romm/resources,romm/redis-data,romm-db,arm/config,ollama}
 cp "${BASH_SOURCE[0]%/*}/configs/arm.yaml" /mnt/nvme/appdata/arm/config/arm.yaml
+
+echo "==> Freeing Port 53 for Pi-hole (disabling systemd-resolved stub)..."
+mkdir -p /etc/systemd/resolved.conf.d
+cat << 'EOF' > /etc/systemd/resolved.conf.d/pihole.conf
+[Resolve]
+DNS=127.0.0.1
+DNSStubListener=no
+EOF
+ln -sf /run/systemd/resolve/resolv.conf /etc/resolv.conf
+systemctl reload-or-restart systemd-resolved || true
+
+# Pre-seed split-horizon DNS for *.moria.lan in Pi-hole dnsmasq config if not present
+if [ ! -f /mnt/nvme/appdata/pihole/etc-dnsmasq.d/02-moria-lan.conf ]; then
+    cat << 'EOF' > /mnt/nvme/appdata/pihole/etc-dnsmasq.d/02-moria-lan.conf
+# Split-Horizon DNS: Route *.moria.lan and moria.lan to erebor reverse proxy
+address=/moria.lan/192.168.0.91
+EOF
+fi
+
 if [[ -n "${SUDO_USER:-}" ]]; then
     chown -R "$SUDO_USER:$SUDO_USER" /mnt/nvme
 fi
