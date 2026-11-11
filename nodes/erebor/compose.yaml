@@ -152,7 +152,7 @@ services:
       - TORRENTING_PORT=6881
     volumes:
       - /mnt/nvme/appdata/qbittorrent:/config
-      - /mnt/mithril/media/downloads:/data/media/downloads
+      - /mnt/mithril/media:/data/media
     ports:
       - "8085:8085"
       - "6881:6881"
