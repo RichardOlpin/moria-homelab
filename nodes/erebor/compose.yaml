@@ -30,6 +30,8 @@ services:
       - TZ=${TZ:-America/Denver}
       - WEBPASSWORD=${PIHOLE_PASSWORD:-moria}
       - FTLCONF_LOCAL_IPV4=192.168.0.91
+      - FTLCONF_dns_listeningMode=ALL
+      - FTLCONF_misc_etc_dnsmasq_d=true
       - PIHOLE_DNS_1=1.1.1.1
       - PIHOLE_DNS_2=1.0.0.1
     volumes:
