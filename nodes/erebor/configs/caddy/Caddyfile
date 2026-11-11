@@ -8,10 +8,7 @@
 
 # Jellyfin / Palantir Media Engine
 http://palantir.moria.lan, http://jellyfin.moria.lan, http://caddy {
-    handle_path /emby/* {
-        rewrite * /{path}
-        reverse_proxy jellyfin:8096
-    }
+    uri strip_prefix /emby
     reverse_proxy jellyfin:8096
 }
 
