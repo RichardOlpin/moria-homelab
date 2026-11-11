@@ -48,3 +48,9 @@ http://pihole.moria.lan, http://dns.moria.lan {
     reverse_proxy pihole:80
 }
 
+# Immich Self-Hosted Photos & Videos
+http://photos.moria.lan, http://immich.moria.lan {
+    reverse_proxy immich-server:2283
+}
+
+

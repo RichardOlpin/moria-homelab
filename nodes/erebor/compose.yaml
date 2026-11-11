@@ -65,7 +65,7 @@ services:
     restart: unless-stopped
     user: "${PUID:-1000}:${PGID:-1000}"
     group_add:
-      - "${RENDER_GID:-109}" # Grants access to Intel QuickSync /dev/dri/renderD128
+      - "${RENDER_GID:-992}" # Grants access to Intel QuickSync /dev/dri/renderD128
     devices:
       - /dev/dri:/dev/dri
     ports:
@@ -112,7 +112,7 @@ services:
     restart: unless-stopped
 
   immich-postgres:
-    image: docker.io/tensorchord/pgvecto-rs:pg14-v0.2.0
+    image: ghcr.io/immich-app/postgres:14-vector-v0.2.0
     container_name: immich-postgres
     restart: unless-stopped
     environment:
