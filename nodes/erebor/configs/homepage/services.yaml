@@ -7,7 +7,7 @@
         container: palantir-engine
         widget:
           type: jellyfin
-          url: http://jellyfin:8096
+          url: http://caddy
           key: {{HOMEPAGE_VAR_JELLYFIN_KEY}}
           enableNowPlaying: true
           enableUser: false
