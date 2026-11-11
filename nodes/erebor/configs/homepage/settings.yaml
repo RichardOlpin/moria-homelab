@@ -1,0 +1,22 @@
+title: Moria Homelab
+favicon: https://raw.githubusercontent.com/walkxcode/dashboard-icons/main/png/server.png
+background:
+  image: https://images.unsplash.com/photo-1518709268805-4e9042af9f23?auto=format&fit=crop&w=1920&q=80
+  brightness: 40
+  blur: sm
+
+cardBlur: sm
+theme: dark
+color: slate
+
+headerStyle: clean
+layout:
+  Media & Streaming:
+    style: row
+    columns: 2
+  Acquisition & Torrents:
+    style: row
+    columns: 4
+  Core Infrastructure:
+    style: row
+    columns: 3

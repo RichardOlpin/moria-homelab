@@ -17,6 +17,24 @@ services:
       - /mnt/nvme/appdata/caddy/config:/config
 
   # ============================================================================
+  # Homepage Dashboard (home.moria.lan on Port 3000)
+  # ============================================================================
+  homepage:
+    image: ghcr.io/gethomepage/homepage:latest
+    container_name: homepage
+    restart: unless-stopped
+    ports:
+      - "3000:3000"
+    volumes:
+      - /mnt/nvme/appdata/homepage:/app/config
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+    environment:
+      - TZ=${TZ:-America/Denver}
+      - HOMEPAGE_VAR_RADARR_KEY=${RADARR_API_KEY:-208fe69e0ea74e55abb12805d58ee5b0}
+      - HOMEPAGE_VAR_SONARR_KEY=${SONARR_API_KEY:-6c2279a7aa0846ef91cf2bae973bf630}
+      - HOMEPAGE_VAR_PROWLARR_KEY=${PROWLARR_API_KEY:-6ad3829e32174f08b2cf83c7396109fa}
+
+  # ============================================================================
   # Pi-hole: Split-Horizon DNS (*.moria.lan) & Network Ad-Blocker
   # ============================================================================
   pihole:
