@@ -300,20 +300,39 @@ services:
       - /mnt/nvme/appdata/romm-db:/var/lib/mysql
 
   # ============================================================================
-  # Papra: Minimalist Document & Receipt Vault (docs.moria.lan)
+  # Paperless-ngx: Document & Receipt Archiving System (docs.moria.lan)
   # ============================================================================
-  papra:
-    image: ghcr.io/papra-hq/papra:latest
-    container_name: papra
+  paperless-redis:
+    image: docker.io/library/redis:7-alpine
+    container_name: paperless-redis
     restart: unless-stopped
-    user: "${PUID:-1000}:${PGID:-1000}"
-    environment:
-      - APP_BASE_URL=https://docs.moria.lan
-      - AUTH_SECRET=${PAPRA_AUTH_SECRET:-change_me_papra_secret_key}
     volumes:
-      - /mnt/mithril/cloud/papra:/app/data
+      - /mnt/nvme/appdata/paperless-redis:/data
+
+  paperless:
+    image: ghcr.io/paperless-ngx/paperless-ngx:latest
+    container_name: paperless
+    restart: unless-stopped
+    depends_on:
+      - paperless-redis
     ports:
-      - "1221:1221"
+      - "8000:8000"
+    environment:
+      - USERMAP_UID=${PUID:-1000}
+      - USERMAP_GID=${PGID:-1000}
+      - PAPERLESS_REDIS=redis://paperless-redis:6379
+      - PAPERLESS_URL=http://docs.moria.lan
+      - PAPERLESS_SECRET_KEY=${PAPERLESS_SECRET_KEY:-f793b890a8e1cbda3907792e3415904ab723bca0}
+      - PAPERLESS_TIME_ZONE=${TZ:-America/Denver}
+      - PAPERLESS_OCR_LANGUAGE=eng
+      - PAPERLESS_OCR_LANGUAGES=eng
+      - PAPERLESS_ALLOWED_HOSTS=docs.moria.lan,paperless.moria.lan,localhost,127.0.0.1,192.168.0.91,100.104.125.73
+      - PAPERLESS_ENABLE_HTTP_REMOTE_USER=false
+    volumes:
+      - /mnt/nvme/appdata/paperless/data:/usr/src/paperless/data
+      - /mnt/nvme/appdata/paperless/media:/usr/src/paperless/media
+      - /mnt/nvme/appdata/paperless/export:/usr/src/paperless/export
+      - /mnt/nvme/appdata/paperless/consume:/usr/src/paperless/consume
 
   # ============================================================================
   # Automatic Ripping Machine (ARM): Headless USB DVD Ripper (rip.moria.lan)

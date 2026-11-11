@@ -84,6 +84,13 @@
           password: adminpassword
 
 - Core Infrastructure:
+    - Paperless-ngx:
+        icon: paperless.png
+        href: http://docs.moria.lan
+        description: Document Archiving & Full-Text OCR Vault
+        server: my-docker
+        container: paperless
+
     - Pi-hole:
         icon: pi-hole.png
         href: http://pihole.moria.lan
