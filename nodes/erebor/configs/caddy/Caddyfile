@@ -40,3 +40,11 @@ http://prowlarr.moria.lan {
 http://downloads.moria.lan, http://qbittorrent.moria.lan {
     reverse_proxy qbittorrent:8085
 }
+
+# Pi-hole DNS Management & Ad-Blocking
+http://pihole.moria.lan, http://dns.moria.lan {
+    @root path /
+    redir @root /admin/ 302
+    reverse_proxy pihole:80
+}
+
