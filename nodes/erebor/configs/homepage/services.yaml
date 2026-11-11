@@ -8,6 +8,7 @@
         widget:
           type: jellyfin
           url: http://jellyfin:8096
+          key: {{HOMEPAGE_VAR_JELLYFIN_KEY}}
           enableNowPlaying: true
           enableUser: false
 
@@ -20,6 +21,7 @@
         widget:
           type: jellyseerr
           url: http://seerr:5055
+          key: {{HOMEPAGE_VAR_SEERR_KEY}}
 
     - Immich:
         icon: immich.png
