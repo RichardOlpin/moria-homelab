@@ -53,4 +53,10 @@ http://photos.moria.lan, http://immich.moria.lan {
     reverse_proxy immich-server:2283
 }
 
+# Homepage Homelab Cockpit
+http://home.moria.lan, http://dashboard.moria.lan {
+    reverse_proxy homepage:3000
+}
+
+
 
